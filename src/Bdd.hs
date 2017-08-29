@@ -1,24 +1,32 @@
-module Bdd (Bdd,
-            singleton,
-            compute,
-            empty, full,
-            cup, cap, diff,
-            (\/), (/\), (\\)
-            ) where
+module Bdd where
 
 data BddT a
     = Leaf Bool
     | Split a (BddT a) (BddT a)
-    deriving (Show)
+    deriving (Eq, Ord, Show)
 
-singleton :: a -> BddT a
-singleton x = Split x (Leaf True) (Leaf False)
+atom :: a -> BddT a
+atom x = Split x (Leaf True) (Leaf False)
 
-compute :: (a -> Bool) -> BddT a -> Bool
-compute _ (Leaf l) = l
-compute f (Split x l r)
-  | f x = compute f l
-  | otherwise = compute f r
+data FoldParam src target = FoldParam { fpEmpty :: target
+                                        , fpFull :: target
+                                        , fpCup :: target -> target -> target
+                                        , fpCap :: target -> target -> target
+                                        , fpDiff :: target -> target -> target
+                                        , fpAtom :: src -> target
+                                        }
+
+foldBdd :: FoldParam a b -> BddT a -> b
+foldBdd param bdd =
+  case bdd of
+    Leaf False -> fpEmpty param
+    Leaf True -> fpFull param
+    Split x p n ->
+      let x' = fpAtom param x
+          p' = fpCap param x' (foldBdd param p)
+          n' = fpDiff param x' (foldBdd param n)
+      in
+      fpCup param p' n'
 
 class Bdd a where
   empty :: a
@@ -26,6 +34,7 @@ class Bdd a where
   cup :: a -> a -> a
   cap :: a -> a -> a
   diff :: a -> a -> a
+
   -- Infix version of the operators
   (\/) :: a -> a -> a
   (/\) :: a -> a -> a
@@ -76,3 +85,16 @@ recurse op b1 b2 a1 c1 d1 a2 c2 d2 =
               | a1 == a2 -> Split a1 (op c1 c2) (op d1 d2)
               | a1 < a2 -> Split a1 (op c1 b2) (op d1 b2)
               | otherwise -> Split a2 (op b1 c2) (op b1 d2)
+
+get :: BddT a -> [([a], [a])]
+get a = get_aux a [] [] []
+
+    where
+    get_aux a accu pos neg =
+      case a of
+        (Leaf True) -> (pos, neg):accu
+        (Leaf False) -> accu
+        (Split x p n) ->
+          let accu' = get_aux p accu (x:pos) neg
+          in
+          get_aux n accu' pos (x:neg)
