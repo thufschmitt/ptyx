@@ -20,7 +20,7 @@ import qualified Data.Set as Set
 data Arrow t = Arrow t t deriving (Eq, Ord, Show)
 
 -- | Arrow type
-newtype T t = T (Bdd.Bdd (Arrow t)) deriving (Eq, Ord, Show, SetTheoretic_)
+newtype T t = T (Bdd.T (Arrow t)) deriving (Eq, Ord, Show, SetTheoretic_)
 
 -- | Returns the domain of an atomic arrow type
 domain :: Arrow t -> t

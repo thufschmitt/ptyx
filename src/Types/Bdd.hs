@@ -7,7 +7,7 @@ union and intersection.
 Used here to represents set-theoretic combinations of types.
 |-}
 module Types.Bdd (
-  Bdd,
+  T,
   atom, isTriviallyFull, isTriviallyEmpty,
   foldBdd, FoldParam(..),
   get)
@@ -16,22 +16,22 @@ where
 import Types.SetTheoretic
 
 -- | A Binary decision diagram
-data Bdd a
+data T a
     = Leaf Bool
-    | Split a (Bdd a) (Bdd a)
+    | Split a (T a) (T a)
     deriving (Eq, Ord, Show)
 
 -- | @atom x@ Returns the Bdd containing only the atom @x@
-atom :: a -> Bdd a
+atom :: a -> T a
 atom x = Split x (Leaf True) (Leaf False)
 
 -- | Tell wether this is the trivial full Bdd
-isTriviallyFull :: Bdd a -> Bool
+isTriviallyFull :: T a -> Bool
 isTriviallyFull (Leaf True) = True
 isTriviallyFull _ = False
 
 -- | Tell wether this is the trivial empty Bdd
-isTriviallyEmpty :: Bdd a -> Bool
+isTriviallyEmpty :: T a -> Bool
 isTriviallyEmpty (Leaf False) = True
 isTriviallyEmpty _ = False
 
@@ -47,7 +47,7 @@ data FoldParam src target = FoldParam { fpEmpty :: target
                                         }
 
 -- | Recursively compute a value from a Bdd
-foldBdd :: FoldParam a b -> Bdd a -> b
+foldBdd :: FoldParam a b -> T a -> b
 foldBdd param bdd =
   case bdd of
     Leaf False -> fpEmpty param
@@ -59,7 +59,7 @@ foldBdd param bdd =
       in
       fpCup param p' n'
 
-instance Ord a => SetTheoretic_ (Bdd a) where
+instance Ord a => SetTheoretic_ (T a) where
   empty = Leaf False
   full  = Leaf True
 
@@ -94,7 +94,7 @@ instance Ord a => SetTheoretic_ (Bdd a) where
     in
     recurse diff b1 b2 a1 c1 d1 a2 c2 d2
 
-recurse :: Ord a => (t1 -> t -> Bdd a) -> t1 -> t -> a -> t1 -> t1 -> a -> t -> t -> Bdd a
+recurse :: Ord a => (t1 -> t -> T a) -> t1 -> t -> a -> t1 -> t1 -> a -> t -> t -> T a
 recurse op b1 b2 a1 c1 d1 a2 c2 d2 =
   case () of _
               | a1 == a2 -> Split a1 (op c1 c2) (op d1 d2)
@@ -109,7 +109,7 @@ recurse op b1 b2 a1 c1 d1 a2 c2 d2 =
 -- For example, @[ ([x], []), ([y], [z, q]) ]@ represents the formula
 --
 -- > x \/ (y /\ (not z) /\ (not q))
-get :: Bdd a -> [([a], [a])]
+get :: T a -> [([a], [a])]
 get a = get_aux a [] [] []
 
     where
