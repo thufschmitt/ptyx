@@ -1,4 +1,13 @@
-module Types.Intervals where
+{-|
+Description: The type of integers
+
+A subtype of @Int@ is a (finite) union of intervals
+-}
+module Types.Intervals (
+  T,
+  bounded, infiniteL, infiniteR
+  )
+where
 
 import Types.SetTheoretic
 
@@ -21,14 +30,23 @@ data Elt = Elt Bound Bound deriving (Eq, Ord, Show)
          --                              b1 /= PosInfinity
          --                              b2 /= NegInfinity
 
--- Sorted list of disjoint intervals
+-- | The type of intervals
 newtype T = Intervals [Elt] deriving (Eq, Ord, Show)
 
+-- | Constructs a bounded interval
 bounded :: Int -> Int -> T
 bounded x y =
   if y < x then
     Intervals []
   else Intervals [ Elt (Finite x) (Finite y) ]
+
+-- | Constructs a semi-infinite on the right interval
+infiniteR :: Int -> T
+infiniteR x = Intervals [ Elt (Finite x) PosInfinity ]
+
+-- | Constructs a semi-infinite on the left interval
+infiniteL :: Int -> T
+infiniteL x = Intervals [ Elt NegInfinity (Finite x) ]
 
 instance SetTheoretic_ T where
   empty = Intervals []

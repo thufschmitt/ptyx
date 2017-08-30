@@ -1,11 +1,20 @@
-module Types where
+{-|
+Module: Types
+Description: Tix used by Tix
+
+-}
+module Types (T, arrows, ints) where
 
 import Types.SetTheoretic
-
 import qualified Types.Arrow as Arrow
 import qualified Types.Intervals as Intervals
 
-data T = T { arrows :: Arrow.T T
+-- | A type is represented by a record whose fields corresponds to its
+-- projections on the various kinds. So a type is the union of its fields.
+data T = T {
+             -- | The arrow part of the type
+             arrows :: Arrow.T T
+             -- | The integral part of the type
            , ints :: Intervals.T
            }
            deriving (Eq, Ord, Show)
