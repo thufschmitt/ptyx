@@ -1,11 +1,13 @@
-module Bdd where
+module Types.Bdd where
 
-data BddT a
+import Types.SetTheoretic
+
+data Bdd a
     = Leaf Bool
-    | Split a (BddT a) (BddT a)
+    | Split a (Bdd a) (Bdd a)
     deriving (Eq, Ord, Show)
 
-atom :: a -> BddT a
+atom :: a -> Bdd a
 atom x = Split x (Leaf True) (Leaf False)
 
 data FoldParam src target = FoldParam { fpEmpty :: target
@@ -16,7 +18,7 @@ data FoldParam src target = FoldParam { fpEmpty :: target
                                         , fpAtom :: src -> target
                                         }
 
-foldBdd :: FoldParam a b -> BddT a -> b
+foldBdd :: FoldParam a b -> Bdd a -> b
 foldBdd param bdd =
   case bdd of
     Leaf False -> fpEmpty param
@@ -28,23 +30,7 @@ foldBdd param bdd =
       in
       fpCup param p' n'
 
-class Bdd a where
-  empty :: a
-  full :: a
-  cup :: a -> a -> a
-  cap :: a -> a -> a
-  diff :: a -> a -> a
-
-  -- Infix version of the operators
-  (\/) :: a -> a -> a
-  (/\) :: a -> a -> a
-  (\\) :: a -> a -> a
-
-  (\/) = cup
-  (/\) = cap
-  (\\) = diff
-
-instance Ord a => Bdd (BddT a) where
+instance Ord a => SetTheoretic_ (Bdd a) where
   empty = Leaf False
   full  = Leaf True
 
@@ -79,14 +65,14 @@ instance Ord a => Bdd (BddT a) where
     in
     recurse diff b1 b2 a1 c1 d1 a2 c2 d2
 
-recurse :: Ord a => (t1 -> t -> BddT a) -> t1 -> t -> a -> t1 -> t1 -> a -> t -> t -> BddT a
+recurse :: Ord a => (t1 -> t -> Bdd a) -> t1 -> t -> a -> t1 -> t1 -> a -> t -> t -> Bdd a
 recurse op b1 b2 a1 c1 d1 a2 c2 d2 =
   case () of _
               | a1 == a2 -> Split a1 (op c1 c2) (op d1 d2)
               | a1 < a2 -> Split a1 (op c1 b2) (op d1 b2)
               | otherwise -> Split a2 (op b1 c2) (op b1 d2)
 
-get :: BddT a -> [([a], [a])]
+get :: Bdd a -> [([a], [a])]
 get a = get_aux a [] [] []
 
     where
