@@ -20,7 +20,15 @@ library
                        , Types.Intervals
                        , Types
                        , Types.SetTheoretic
-  build-depends:       base >= 4.7 && < 5, containers
+                       , NixLight.Ast
+                       , NixLight.FromHNix
+                       , NixLight.WithLoc
+  build-depends:       base >= 4.7 && < 5
+                       , containers
+                       , hnix
+                       , text
+                       , data-fix
+                       , deriving-compat
   default-language:    Haskell2010
 
 test-suite tix-test
