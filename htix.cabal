@@ -20,9 +20,13 @@ library
                        , Types.Intervals
                        , Types
                        , Types.SetTheoretic
+                       , Types.Singletons
                        , NixLight.Ast
                        , NixLight.FromHNix
                        , NixLight.WithLoc
+                       , Typer.Infer
+                       , Typer.Environ
+                       , Typer.Environ.Gamma
   build-depends:       base >= 4.7 && < 5
                        , containers
                        , hnix
