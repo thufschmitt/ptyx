@@ -1,7 +1,7 @@
 {-|
 Description: The type of integers
 
-A subtype of @Int@ is a (finite) union of intervals
+A subtype of 'Int' is a (finite) union of intervals
 -}
 module Types.Intervals (
   T,
@@ -11,7 +11,7 @@ where
 
 import Types.SetTheoretic
 
-data Bound = Finite Int
+data Bound = Finite Integer
            | PosInfinity
            | NegInfinity
            deriving (Eq, Show)
@@ -34,18 +34,18 @@ data Elt = Elt Bound Bound deriving (Eq, Ord, Show)
 newtype T = Intervals [Elt] deriving (Eq, Ord, Show)
 
 -- | Constructs a bounded interval
-bounded :: Int -> Int -> T
+bounded :: Integer -> Integer -> T
 bounded x y =
   if y < x then
     Intervals []
   else Intervals [ Elt (Finite x) (Finite y) ]
 
 -- | Constructs a semi-infinite on the right interval
-infiniteR :: Int -> T
+infiniteR :: Integer -> T
 infiniteR x = Intervals [ Elt (Finite x) PosInfinity ]
 
 -- | Constructs a semi-infinite on the left interval
-infiniteL :: Int -> T
+infiniteL :: Integer -> T
 infiniteL x = Intervals [ Elt NegInfinity (Finite x) ]
 
 instance SetTheoretic_ T where
