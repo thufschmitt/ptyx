@@ -1,4 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE DeriveFunctor #-}
 
 module NixLight.WithLoc where
 
@@ -9,7 +10,7 @@ import Text.Show.Deriving
 data T a = T { loc   :: SrcSpan
              , descr :: a
              }
-             deriving (Eq, Ord, Show)
+             deriving (Eq, Ord, Show, Functor)
 
 $(deriveShow1 ''T)
 
