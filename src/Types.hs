@@ -3,7 +3,7 @@ Module: Types
 Description: Tix used by Tix
 
 -}
-module Types (T, arrows, ints) where
+module Types (T, arrows, ints, arrow, int) where
 
 import Types.SetTheoretic
 import qualified Types.Arrow as Arrow
@@ -43,3 +43,9 @@ instance SetTheoretic T where
   sub t1 t2 =
     sub (arrows t1) (arrows t2) &&
     sub (ints t1) (ints t2)
+
+arrow :: Arrow.T T -> T
+arrow a = T { ints = empty, arrows = a }
+
+int :: Intervals.T -> T
+int i = T { ints = i, arrows = empty }
