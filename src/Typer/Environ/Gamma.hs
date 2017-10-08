@@ -1,7 +1,11 @@
-module Typer.Environ.Gamma where
+module Typer.Environ.Gamma ( T ) where
 
-import Data.Map.Strict
+import Data.Default (Default, def)
+import qualified Data.Map.Strict as Map
 import Data.Text
 import qualified Types
 
-type T = Map Text Types.T
+newtype T = T (Map.Map Text Types.T)
+
+instance Default T where
+  def = T Map.empty
