@@ -1,8 +1,8 @@
-name:                htix
+name:                ptyx
 version:             0.1.0.0
 -- synopsis:
 -- description:
-homepage:            https://github.com/regnat/htix#readme
+homepage:            https://github.com/regnat/ptyx#readme
 license:             BSD3
 license-file:        LICENSE
 author:              Théophane Hufschmitt
@@ -41,7 +41,7 @@ test-suite htix-test
   hs-source-dirs:      test
   main-is:             Spec.hs
   build-depends:       base
-                     , htix
+                     , ptyx
                      , hnix
                      , hspec
                      , data-default
@@ -51,4 +51,4 @@ test-suite htix-test
 
 source-repository head
   type:     git
-  location: https://github.com/regnat/htix
+  location: https://github.com/regnat/ptyx
