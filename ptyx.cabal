@@ -19,6 +19,7 @@ library
                        , Types.Arrow
                        , Types.Intervals
                        , Types
+                       , Types.FromAnnot
                        , Types.SetTheoretic
                        , Types.Singletons
                        , NixLight.Annotations
@@ -29,6 +30,7 @@ library
                        , Typer.Infer
                        , Typer.Environ
                        , Typer.Environ.Gamma
+                       , Typer.Error
   build-depends:       base >= 4.7 && < 5
                        , containers
                        , hnix

@@ -5,6 +5,8 @@ Description: Tix used by Tix
 -}
 module Types (T, arrows, ints, arrow, int) where
 
+
+import Prelude hiding (any)
 import Types.SetTheoretic
 import qualified Types.Arrow as Arrow
 import qualified Types.Intervals as Intervals
