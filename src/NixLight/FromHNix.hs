@@ -1,9 +1,14 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module NixLight.FromHNix where
 
 import Data.Fix (cata, Fix(..))
 import Data.Functor.Compose
 import qualified NixLight.Ast as NL
 import qualified NixLight.WithLoc as WL
+import qualified NixLight.Annotations.Parser as AnnotParser
+import qualified Text.Trifecta.Delta as TD
+import qualified Text.Trifecta as Tri
 import Nix.Expr
 import Nix.Atoms
 
@@ -26,4 +31,9 @@ constant _ = undefined -- TODO
 
 pat :: Params NL.ExprLoc -> NL.Pattern
 pat (Param var) = NL.Pvar var
+pat (ParamAnnot p ':' annot) =
+  case AnnotParser.typeAnnot (TD.Directed "<annot>" 0 0 0 0) annot of
+    Tri.Success type_annot ->
+      NL.Pannot type_annot (pat p)
+    Tri.Failure _ -> undefined -- TODO
 pat _ = undefined -- TODO

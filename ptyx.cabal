@@ -21,7 +21,8 @@ library
                        , Types
                        , Types.SetTheoretic
                        , Types.Singletons
-                       , Types.Parser
+                       , NixLight.Annotations
+                       , NixLight.Annotations.Parser
                        , NixLight.Ast
                        , NixLight.FromHNix
                        , NixLight.WithLoc

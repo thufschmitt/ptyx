@@ -9,6 +9,7 @@ import Data.Fix
 import Data.Text (Text)
 import Text.Show.Deriving
 import qualified NixLight.WithLoc as WL
+import qualified NixLight.Annotations as Annot
 
 data ExprF r
   = Econstant !Constant
@@ -27,8 +28,9 @@ newtype Constant
   -- TODO: complete
   deriving (Ord, Eq, Show)
 
-newtype Pattern
-  = Pvar Text
+data Pattern
+  = Pvar !Text
+  | Pannot !Annot.T !Pattern
   deriving (Ord, Eq, Show)
 
 $(deriveShow1 ''ExprF)
