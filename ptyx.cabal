@@ -21,6 +21,7 @@ library
                        , Types
                        , Types.SetTheoretic
                        , Types.Singletons
+                       , Types.Parser
                        , NixLight.Ast
                        , NixLight.FromHNix
                        , NixLight.WithLoc
@@ -34,6 +35,8 @@ library
                        , data-fix
                        , data-default
                        , deriving-compat
+                       , trifecta
+                       , parsers
   default-language:    Haskell2010
 
 test-suite ptyx-test
