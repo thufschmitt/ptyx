@@ -4,6 +4,7 @@ import Data.Fix (cata)
 import Data.Functor.Compose
 
 import Data.Fix (Fix(Fix))
+import Data.Maybe (fromMaybe)
 import qualified NixLight.Ast as NL
 import qualified NixLight.WithLoc as WL
 import qualified NixLight.Annotations as Annot
@@ -15,7 +16,7 @@ import qualified Types.FromAnnot
 import qualified Types.Bdd as Bdd
 import qualified Types.Arrow as Arrow
 
-import Types.SetTheoretic (full)
+import Types.SetTheoretic (full, cap)
 
 expr :: Env.T -> NL.ExprLoc -> ([Error.T], Types.T)
 expr env (Fix (Compose (WL.T _loc descr))) =
@@ -32,13 +33,13 @@ expr env (Fix (Compose (WL.T _loc descr))) =
 constant :: NL.Constant -> Types.T
 constant (NL.Cint i) = S.int i
 
-updateEnv :: Env.T -> Maybe Annot.T -> NL.Pattern -> ([Error.T], (Env.T, Types.T))
+updateEnv :: Env.T -> Maybe Types.T -> NL.Pattern -> ([Error.T], (Env.T, Types.T))
 updateEnv env previousAnnot pat = case pat of
   NL.Pvar varName -> do
-    xType <-
-      case previousAnnot of
-        Nothing -> pure full
-        Just annot -> case Types.FromAnnot.parse env annot of
-          Nothing -> error "This should no go through error"
-          Just typ -> pure typ
-    return $ (Env.addVariable varName xType env, xType)
+    let xType = fromMaybe full previousAnnot
+    return (Env.addVariable varName xType env, xType)
+  NL.Pannot annot sub_pat -> do
+    annotatedType <- case Types.FromAnnot.parse env annot of
+      Nothing -> error "This should no go through error"
+      Just typ -> pure typ
+    updateEnv env (cap annotatedType <$> previousAnnot) sub_pat

@@ -31,3 +31,6 @@ spec =
   it "Test trivial lambda" $
     typeString "x: 1" `shouldSuccessAs`
       Types.arrow (Arrow.T $ Bdd.atom $ Arrow.Arrow full (Singleton.int 1))
+  it "Test simple lambda" $
+    typeString "x /*: Int */: 1" `shouldSuccessAs`
+      Types.arrow (Arrow.T $ Bdd.atom $ Arrow.Arrow full (Singleton.int 1))
