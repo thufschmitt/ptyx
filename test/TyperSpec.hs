@@ -60,3 +60,13 @@ spec =
     typeString "(x /*: Int */: x) 2" `shouldSuccessAs` Types.int full
   it "Test wrong application" $
     typeString "(x /*: Empty */: x) 1" & shouldFail
+  it "Test higher order" $
+    let intarrint =
+          Types.arrow
+            (Arrow.T $ Bdd.atom $ Arrow.Arrow (Types.int full) (Types.int full))
+    in
+    typeString "(x /*: Int -> Int */: x)" `shouldSuccessAs`
+      Types.arrow (Arrow.T $ Bdd.atom $ Arrow.Arrow intarrint intarrint)
+  it "Test higher order apply" $
+    typeString "(x /*: Int -> Int */: x 1) (x /*: Int */: x)"
+      `shouldSuccessAs` Types.int full
