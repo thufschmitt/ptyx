@@ -20,6 +20,9 @@ mapGamma f t = t { gamma = f $ gamma t }
 addVariable :: Text -> Types.T -> T -> T
 addVariable name typ = mapGamma (Gamma.insert name typ)
 
+lookupVariable :: Text -> T -> Maybe Types.T
+lookupVariable name = Gamma.lookup name . gamma
+
 getType :: T -> Text -> Maybe Types.T
 getType _ name = -- FIXME: using hardcoded list of builtin types for now
   case name of

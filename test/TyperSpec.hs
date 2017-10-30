@@ -39,3 +39,5 @@ spec =
       Types.arrow (Arrow.T $ Bdd.atom $ Arrow.Arrow (Types.int full) (Types.int full))
   it "Test application" $
     typeString "(x: 1) 2" `shouldSuccessAs` Singleton.int 1
+  it "Test application2" $
+    typeString "(x /*: Int */: x) 2" `shouldSuccessAs` Types.int full

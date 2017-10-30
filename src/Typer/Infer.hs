@@ -37,7 +37,11 @@ expr env (Fix (Compose (WL.T _loc descr))) =
                 (Types.arrows funType)
                 argType
         pure codom
-      _ -> undefined
+      (NL.Evar v) ->
+        case Env.lookupVariable v env of
+          Just t -> pure t
+          Nothing -> error "blah"
+      -- _ -> undefined
 
 constant :: NL.Constant -> Types.T
 constant (NL.Cint i) = S.int i
