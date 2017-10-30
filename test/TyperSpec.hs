@@ -12,13 +12,16 @@ import qualified Types
 import qualified Types.Bdd as Bdd
 import qualified Types.Arrow as Arrow
 
-shouldSuccessAs :: (Eq a, Show a) => NParser.Result ([Typer.Error.T], a) -> a -> Expectation
-shouldSuccessAs (NParser.Success ([], x)) y = x `shouldBe` y
-shouldSuccessAs (NParser.Failure f) _ = expectationFailure (show f)
-shouldSuccessAs (NParser.Success (errs, _)) _ =
-  expectationFailure (show errs)
+import qualified Control.Monad.Writer as W
 
-typeString :: String -> NParser.Result ([Typer.Error.T], Types.T)
+shouldSuccessAs :: (Eq a, Show a) => NParser.Result (W.Writer [Typer.Error.T] a) -> a -> Expectation
+shouldSuccessAs (NParser.Failure f) _ = expectationFailure (show f)
+shouldSuccessAs (NParser.Success res) y =
+  case W.runWriter res of
+    (x, []) -> x `shouldBe` y
+    (_, errs) -> expectationFailure (show errs)
+
+typeString :: String -> NParser.Result (W.Writer [Typer.Error.T] Types.T)
 typeString s =
   (Infer.expr def . NixLight.FromHNix.expr) <$>
     NParser.parseNixStringLoc s

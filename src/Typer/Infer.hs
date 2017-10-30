@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Typer.Infer where
 
 import Data.Fix (cata)
@@ -16,14 +18,18 @@ import qualified Types.FromAnnot
 import qualified Types.Bdd as Bdd
 import qualified Types.Arrow as Arrow
 
+import qualified Control.Monad.Writer as W
+
 import Types.SetTheoretic
 
-expr :: Env.T -> NL.ExprLoc -> ([Error.T], Types.T)
-expr env (Fix (Compose (WL.T _loc descr))) =
+type WithError = W.Writer [Error.T]
+
+expr :: Env.T -> NL.ExprLoc -> WithError Types.T
+expr env (Fix (Compose (WL.T loc descr))) =
   case descr of
       (NL.Econstant c) -> pure $ constant c
       (NL.Eabs pat body) -> do
-        (new_env, domain) <- updateEnv env Nothing pat
+        (new_env, domain) <- updateEnv loc env Nothing pat
         codomain <- expr new_env body
         pure $
           Types.arrow $
@@ -31,35 +37,40 @@ expr env (Fix (Compose (WL.T _loc descr))) =
       (NL.Eapp fun arg) -> do
         funType <- expr env fun
         argType <- expr env arg
-        checkSubtype funType $ Types.arrow full
+        checkSubtype loc funType $ Types.arrow full
         let Arrow.Arrow dom codom =
               Arrow.getApplication
                 (Types.arrows funType)
                 argType
+        checkSubtype loc argType dom
         pure codom
       (NL.Evar v) ->
         case Env.lookupVariable v env of
           Just t -> pure t
-          Nothing -> error "blah"
+          Nothing -> W.writer (full, [Error.T loc "Undefined variable"])
       -- _ -> undefined
 
 constant :: NL.Constant -> Types.T
 constant (NL.Cint i) = S.int i
 
-updateEnv :: Env.T -> Maybe Types.T -> NL.Pattern -> ([Error.T], (Env.T, Types.T))
-updateEnv env previousAnnot pat = case pat of
+updateEnv :: WL.Loc
+          -> Env.T
+          -> Maybe Types.T
+          -> NL.Pattern
+          -> WithError (Env.T, Types.T)
+updateEnv loc env previousAnnot pat = case pat of
   NL.Pvar varName -> do
     let xType = fromMaybe full previousAnnot
     return (Env.addVariable varName xType env, xType)
   NL.Pannot annot sub_pat -> do
     annotatedType <- case Types.FromAnnot.parse env annot of
-      Nothing -> error "This should no go through error"
+      Nothing -> W.writer (full, [Error.T loc "Undefined type"])
       Just typ -> pure typ
     let virtualAnnot = fromMaybe full previousAnnot
-    updateEnv env (Just $ cap annotatedType virtualAnnot) sub_pat
+    updateEnv loc env (Just $ cap annotatedType virtualAnnot) sub_pat
 
-checkSubtype :: Types.T -> Types.T -> ([Error.T], ())
-checkSubtype t1 t2 =
+checkSubtype :: WL.Loc -> Types.T -> Types.T -> WithError ()
+checkSubtype loc t1 t2 =
   if sub t1 t2
   then pure ()
-  else error "This also should not go through error"
+  else W.tell [Error.T loc "Subtyping failure"]

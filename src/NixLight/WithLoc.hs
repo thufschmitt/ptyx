@@ -7,6 +7,8 @@ import Data.Functor.Compose
 import Nix.Expr (SrcSpan)
 import Text.Show.Deriving
 
+type Loc = SrcSpan
+
 data T a = T { loc   :: SrcSpan
              , descr :: a
              }

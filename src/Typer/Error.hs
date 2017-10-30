@@ -2,10 +2,10 @@
 
 module Typer.Error (T(..)) where
 
-import Text.Trifecta.Delta (Delta)
+import Nix.Expr (SrcSpan)
 import Data.Text (Text, unpack)
 
-data T = T { location :: Delta, message :: Text }
+data T = T { location :: SrcSpan, message :: Text }
 
 instance Show T where
   show T{ location, message } =
