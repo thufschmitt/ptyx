@@ -16,7 +16,10 @@ import Data.Function ((&))
 
 import qualified Control.Monad.Writer as W
 
-shouldSuccessAs :: (Eq a, Show a) => NParser.Result (W.Writer [Typer.Error.T] a) -> a -> Expectation
+shouldSuccessAs :: (Eq a, Show a)
+                => NParser.Result (W.Writer [Typer.Error.T] a)
+                -> a
+                -> Expectation
 shouldSuccessAs (NParser.Failure f) _ = expectationFailure (show f)
 shouldSuccessAs (NParser.Success res) y =
   case W.runWriter res of
@@ -26,7 +29,8 @@ shouldSuccessAs (NParser.Success res) y =
 shouldFail (NParser.Failure f) _ = expectationFailure (show f)
 shouldFail (NParser.Success res) y =
   case W.runWriter res of
-    (x, []) -> expectationFailure $ "Expected an error, but got type " ++ show x
+    (x, []) -> expectationFailure
+                 $ "Expected an error, but got type " ++ show x
     (_, errs) -> pure ()
 
 typeString :: String -> NParser.Result (W.Writer [Typer.Error.T] Types.T)
@@ -44,10 +48,12 @@ spec =
       Types.arrow (Arrow.T $ Bdd.atom $ Arrow.Arrow full (Singleton.int 1))
   it "Test trivial annotated lambda" $
     typeString "x /*: Int */: 1" `shouldSuccessAs`
-      Types.arrow (Arrow.T $ Bdd.atom $ Arrow.Arrow (Types.int full) (Singleton.int 1))
+      Types.arrow
+        (Arrow.T $ Bdd.atom $ Arrow.Arrow (Types.int full) (Singleton.int 1))
   it "Test simple annotated lambda" $
     typeString "x /*: Int */: x" `shouldSuccessAs`
-      Types.arrow (Arrow.T $ Bdd.atom $ Arrow.Arrow (Types.int full) (Types.int full))
+      Types.arrow
+        (Arrow.T $ Bdd.atom $ Arrow.Arrow (Types.int full) (Types.int full))
   it "Test application" $
     typeString "(x: 1) 2" `shouldSuccessAs` Singleton.int 1
   it "Test application2" $
