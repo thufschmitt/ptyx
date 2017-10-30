@@ -35,5 +35,5 @@ pat (ParamAnnot p ':' annot) =
   case AnnotParser.typeAnnot (TD.Directed "<annot>" 0 0 0 0) annot of
     Tri.Success type_annot ->
       NL.Pannot type_annot (pat p)
-    Tri.Failure _ -> undefined -- TODO
+    Tri.Failure f -> error $ show f
 pat _ = undefined -- TODO
