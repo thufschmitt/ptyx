@@ -51,7 +51,8 @@ updateEnv env previousAnnot pat = case pat of
     annotatedType <- case Types.FromAnnot.parse env annot of
       Nothing -> error "This should no go through error"
       Just typ -> pure typ
-    updateEnv env (cap annotatedType <$> previousAnnot) sub_pat
+    let virtualAnnot = fromMaybe full previousAnnot
+    updateEnv env (Just $ cap annotatedType virtualAnnot) sub_pat
 
 checkSubtype :: Types.T -> Types.T -> ([Error.T], ())
 checkSubtype t1 t2 =
