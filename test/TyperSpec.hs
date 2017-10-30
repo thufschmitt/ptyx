@@ -70,3 +70,5 @@ spec =
   it "Test higher order apply" $
     typeString "(x /*: Int -> Int */: x 1) (x /*: Int */: x)"
       `shouldSuccessAs` Types.int full
+  it "Test undef type" $
+    typeString "undefined" `shouldSuccessAs` full
