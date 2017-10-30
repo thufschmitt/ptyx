@@ -2,10 +2,9 @@
 
 module Typer.Infer where
 
-import Data.Fix (cata)
 import Data.Functor.Compose
 
-import Data.Fix (Fix(Fix))
+import Data.Fix (Fix(Fix), cata)
 import Data.Maybe (fromMaybe)
 import qualified NixLight.Ast as NL
 import qualified NixLight.WithLoc as WL
