@@ -21,6 +21,9 @@ import qualified Control.Monad.Writer as W
 
 import Types.SetTheoretic
 
+undefType :: Types.T
+undefType = full -- To be replaced by the gradual type once it is implemented
+
 type WithError = W.Writer [Error.T]
 
 expr :: Env.T -> NL.ExprLoc -> WithError Types.T
@@ -46,7 +49,7 @@ expr env (Fix (Compose (WL.T loc descr))) =
       (NL.Evar v) ->
         case Env.lookupVariable v env of
           Just t -> pure t
-          Nothing -> W.writer (full, [Error.T loc "Undefined variable"])
+          Nothing -> W.writer (undefType, [Error.T loc "Undefined variable"])
       -- _ -> undefined
 
 constant :: NL.Constant -> Types.T
@@ -63,7 +66,7 @@ updateEnv loc env previousAnnot pat = case pat of
     return (Env.addVariable varName xType env, xType)
   NL.Pannot annot sub_pat -> do
     annotatedType <- case Types.FromAnnot.parse env annot of
-      Nothing -> W.writer (full, [Error.T loc "Undefined type"])
+      Nothing -> W.writer (undefType, [Error.T loc "Undefined type"])
       Just typ -> pure typ
     let virtualAnnot = fromMaybe full previousAnnot
     updateEnv loc env (Just $ cap annotatedType virtualAnnot) sub_pat
