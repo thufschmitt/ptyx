@@ -16,7 +16,7 @@ import qualified Types.FromAnnot
 import qualified Types.Bdd as Bdd
 import qualified Types.Arrow as Arrow
 
-import Types.SetTheoretic (full, cap)
+import Types.SetTheoretic
 
 expr :: Env.T -> NL.ExprLoc -> ([Error.T], Types.T)
 expr env (Fix (Compose (WL.T _loc descr))) =
@@ -28,6 +28,15 @@ expr env (Fix (Compose (WL.T _loc descr))) =
         pure $
           Types.arrow $
             Arrow.T $ Bdd.atom $ Arrow.Arrow domain codomain
+      (NL.Eapp fun arg) -> do
+        funType <- expr env fun
+        argType <- expr env arg
+        checkSubtype funType $ Types.arrow full
+        let Arrow.Arrow dom codom =
+              Arrow.getApplication
+                (Types.arrows funType)
+                argType
+        pure codom
       _ -> undefined
 
 constant :: NL.Constant -> Types.T
@@ -43,3 +52,9 @@ updateEnv env previousAnnot pat = case pat of
       Nothing -> error "This should no go through error"
       Just typ -> pure typ
     updateEnv env (cap annotatedType <$> previousAnnot) sub_pat
+
+checkSubtype :: Types.T -> Types.T -> ([Error.T], ())
+checkSubtype t1 t2 =
+  if sub t1 t2
+  then pure ()
+  else error "This also should not go through error"

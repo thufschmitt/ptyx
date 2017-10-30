@@ -8,13 +8,13 @@ Description: Arrow types
 module Types.Arrow (
   T(..), Arrow(..),
   domain, codomain,
+  getApplication
   )
 where
 
 import Types.SetTheoretic
 
 import qualified Types.Bdd as Bdd
-import qualified Types.DNF as DNF
 
 import Data.Monoid ((<>))
 import qualified Data.Set as Set
@@ -73,23 +73,27 @@ isEmptyA (T a)
 instance SetTheoretic t => SetTheoretic (T t) where
   isEmpty = isEmptyA
 
-apply :: forall t. SetTheoretic t => DNF.T (Arrow t) -> t -> t
-apply arrows arg =
-  DNF.foldl1 (\accu arr -> applyIntersection arr `cup` accu) empty arrows
-  where
-    applyIntersection :: Set.Set (Arrow t) -> t
-    applyIntersection arrows =
+-- | @getApplication arr s@ returns the smaller arrow atom type @s -> t@ such
+-- that @s -> t <: arr@
+getApplication :: forall t. SetTheoretic t => T t -> t -> Arrow t
+getApplication (T arr) s = Bdd.foldBdd
+  Bdd.FoldParam{
+    Bdd.fpEmpty = Arrow empty full,
+    Bdd.fpFull = Arrow full empty,
+    Bdd.fpAtom = \(Arrow dom codom) ->
+      Arrow (dom `cap` s) codom,
+    Bdd.fpCup = \(Arrow t1 t2) (Arrow u1 u2) ->
+      Arrow (cap t1 u1) (cup t2 u2),
+    Bdd.fpCap = \(Arrow t1 t2) (Arrow u1 u2) ->
       let
-        allValidSubsets =
-          filter
-            (\sset -> not $ arg `sub` cupN (domain <$> Set.toList sset))
-            (subsets arrows)
+        s1 = diff t1 u1
+        s2 = diff u1 t1
       in
-      cupN $
-        map
-          (\sset -> capN $ codomain <$> Set.toList (Set.difference arrows sset))
-          allValidSubsets
-    subsets :: Ord a => Set.Set a -> [Set.Set a]
-    subsets = foldl
-      (\accu elt -> accu <> map (Set.insert elt) accu)
-      []
+      if isEmpty s1
+      then Arrow t1 t2
+      else if isEmpty s2
+      then Arrow u1 u2
+      else Arrow (t1 `cup` u1) (t2 `cup` u2),
+    Bdd.fpDiff = const -- FIXME: this is not what we want
+  }
+  arr

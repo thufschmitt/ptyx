@@ -21,7 +21,6 @@ library
                        , Types
                        , Types.FromAnnot
                        , Types.SetTheoretic
-                       , Types.DNF
                        , Types.Singletons
                        , NixLight.Annotations
                        , NixLight.Annotations.Parser

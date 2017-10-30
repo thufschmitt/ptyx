@@ -34,3 +34,5 @@ spec =
   it "Test simple lambda" $
     typeString "x /*: Int */: 1" `shouldSuccessAs`
       Types.arrow (Arrow.T $ Bdd.atom $ Arrow.Arrow full (Singleton.int 1))
+  it "Test application" $
+    typeString "(x: 1) 2" `shouldSuccessAs` Singleton.int 1
