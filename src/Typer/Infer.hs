@@ -49,7 +49,7 @@ expr env (Fix (Compose (WL.T loc descr))) =
           Nothing -> W.writer (Types.undef, [Error.T loc "Undefined variable"])
       (NL.Eannot annot e) -> do
         subExprType <- expr env e
-        annotType <- Types.FromAnnot.parse loc env annot
+        annotType <- Types.FromAnnot.parse env annot
         checkSubtype loc subExprType annotType
         pure annotType
 
@@ -66,7 +66,7 @@ updateEnv loc env previousAnnot pat = case pat of
     let xType = fromMaybe full previousAnnot
     return (Env.addVariable varName xType env, xType)
   NL.Pannot annot sub_pat -> do
-    annotatedType <- Types.FromAnnot.parse loc env annot
+    annotatedType <- Types.FromAnnot.parse env annot
     let virtualAnnot = fromMaybe full previousAnnot
     updateEnv loc env (Just $ cap annotatedType virtualAnnot) sub_pat
 

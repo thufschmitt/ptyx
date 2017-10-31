@@ -1,10 +1,16 @@
 module NixLight.Annotations
-  ( T(..)
+  ( T, NoAnnotT(..)
   ) where
 
 import Data.Text (Text)
+import Data.Fix
 
-data T
-  = Ident !Text
+import qualified NixLight.WithLoc as WL
+
+
+data NoAnnotT
+  = Ident !(WL.T Text)
   | Arrow !T !T
   deriving (Ord, Eq, Show)
+
+type T = (WL.T NoAnnotT)
