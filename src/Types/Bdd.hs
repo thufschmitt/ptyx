@@ -6,11 +6,17 @@ A data structure to represent boolean formulas, with efficient operations of
 union and intersection.
 Used here to represents set-theoretic combinations of types.
 |-}
+
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE NamedFieldPuns #-}
+
 module Types.Bdd (
   T,
   atom, isTriviallyFull, isTriviallyEmpty,
   foldBdd, FoldParam(..),
-  get)
+  get,
+  DNF, toDNF
+  )
 where
 
 import Types.SetTheoretic
@@ -18,7 +24,7 @@ import Types.SetTheoretic
 -- | A Binary decision diagram
 data T a
     = Leaf Bool
-    | Split a (T a) (T a)
+    | Split { tif :: a, tthen :: T a, telse :: T a }
     deriving (Eq, Ord)
 
 instance Show a => Show (T a) where
@@ -136,3 +142,24 @@ get a = get_aux a [] [] []
           let accu' = get_aux p accu (x:pos) neg
           in
           get_aux n accu' pos (x:neg)
+
+-- | Disjunctive normal form
+-- Alternative representation for boolean formulas, sometime easier to use
+--
+-- The outer list corresponds to a bid disjunction, and for each element of
+-- this list, the first element of the pair is a conjunction of atoms and the
+-- second a conjonction of negated atoms.
+type DNF a = [([a],[a])]
+
+toDNF :: T a -> DNF a
+toDNF = aux [] [] []
+  where
+    aux :: DNF a -> [a] -> [a] -> T a -> DNF a
+    aux accu pos neg = \case
+      Leaf True -> (pos, neg) : accu
+      Leaf False -> accu
+      Split { tif, tthen, telse } ->
+        let accuR = aux accu (tif : pos) neg tthen
+            accuRL = aux accuR pos (tif : neg) telse
+        in
+        accuRL
