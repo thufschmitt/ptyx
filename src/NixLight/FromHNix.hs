@@ -11,6 +11,7 @@ import qualified Data.Text as T
 import qualified NixLight.Ast as NL
 import qualified NixLight.WithLoc as WL
 import qualified NixLight.Annotations.Parser as AnnotParser
+import qualified NixLight.Annotations as Annot
 import qualified Text.Trifecta.Delta as TD
 import qualified Text.Trifecta as Tri
 import Nix.Expr
@@ -25,7 +26,7 @@ expr = cata phi where
             (NAbs param body) -> NL.Eabs (pat param) body
             (NApp e1 e2) -> NL.Eapp e1 e2
             (NSym x) -> NL.Evar x
-            (NAnnot e ':' annot) ->
+            (NAnnot e (Annotation ':' annot)) ->
               case AnnotParser.typeAnnot (spanBegin loc) annot of
                 Tri.Success type_annot ->
                   NL.Eannot type_annot e
@@ -42,12 +43,17 @@ constant _ = undefined -- TODO
 
 pat :: Params NL.ExprLoc -> NL.Pattern
 pat (Param var) = NL.Pvar var
-pat (ParamAnnot p ':' annot) =
-  case AnnotParser.typeAnnot (TD.Directed "<annot>" 0 0 0 0) annot of
-    Tri.Success type_annot ->
-      NL.Pannot type_annot (pat p)
-    Tri.Failure f -> error $ show f
+pat (ParamAnnot p (Annotation ':' annot)) =
+  let type_annot = parseTypeAnnot (TD.Directed "<annot>" 0 0 0 0) annot in
+  NL.Pannot type_annot (pat p)
+pat (ParamAnnot p _) = pat p
 pat _ = undefined -- TODO
+
+parseTypeAnnot :: TD.Delta -> T.Text -> Annot.T
+parseTypeAnnot loc annot =
+  case AnnotParser.typeAnnot (TD.Directed "<annot>" 0 0 0 0) annot of
+    Tri.Success type_annot -> type_annot
+    Tri.Failure f -> error $ show f
 
 bindings :: [Binding NL.ExprLoc] -> NL.Bindings
 bindings =
@@ -55,7 +61,13 @@ bindings =
     case binding of
       Inherit Nothing names -> foldl addInherit accu names
       Inherit (Just e) vars  -> foldl (addQualifiedInherit e) accu vars
-      NamedVar attrPath rhs -> addNamedVar attrPath rhs accu
+      NamedVar attrPath annot rhs ->
+        let typeAnnot = annot >>= (\case
+              Annotation ':' txt -> Just txt
+              _ -> Nothing)
+        in
+        let parsedTypeAnnot = parseTypeAnnot (TD.Directed "<annot>" 0 0 0 0) <$> typeAnnot in
+        addNamedVar attrPath parsedTypeAnnot rhs accu
       )
     Map.empty
   where
@@ -70,9 +82,9 @@ bindings =
       DynamicKey _ -> error "Dynamic keys are not allowed"
       StaticKey name -> error "Field access not implemented yet"
 
-    addNamedVar [StaticKey name] rhs =
-      addIfAbsent name (NL.NamedVar Nothing rhs)
-    addNamedVar _ _ = error "Not implemented or forbidden lhs"
+    addNamedVar [StaticKey name] annot rhs =
+      addIfAbsent name (NL.NamedVar annot rhs)
+    addNamedVar _ _ _ = error "Not implemented or forbidden lhs"
 
     addIfAbsent :: T.Text -> NL.BindingDef -> NL.Bindings -> NL.Bindings
     addIfAbsent =

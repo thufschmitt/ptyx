@@ -39,7 +39,7 @@ packages:
 - .
 - location:
     git: https://github.com/regnat/hnix
-    commit: c5fcd8f
+    commit: 8da82e6
   extra-dep: true
 # Dependency packages to be pulled from upstream that are not in the resolver
 # (e.g., acme-missiles-0.3)
