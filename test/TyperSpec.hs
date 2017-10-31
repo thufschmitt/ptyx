@@ -64,25 +64,25 @@ spec = do
       "2 /*: Int */" `inferredAndChecks` Types.int full
     describe "Lambdas" $ do
       it "trivial" $
-        "x: 1" `isInferredAs`
+        "x: 1" `inferredAndChecks`
           Types.arrow (Arrow.atom full (Singleton.int 1))
       it "trivial annotated" $
-        "x /*: Int */: 1" `isInferredAs`
+        "x /*: Int */: 1" `inferredAndChecks`
           Types.arrow (Arrow.atom (Types.int full) (Singleton.int 1))
       it "simple annotated" $
-        "x /*: Int */: x" `isInferredAs`
+        "x /*: Int */: x" `inferredAndChecks`
           Types.arrow (Arrow.atom (Types.int full) (Types.int full))
       it "higher order" $
         let intarrint =
               Types.arrow (Arrow.atom (Types.int full) (Types.int full))
         in
-        "(x /*: Int -> Int */: x)" `isInferredAs`
+        "(x /*: Int -> Int */: x)" `inferredAndChecks`
           Types.arrow (Arrow.atom intarrint intarrint)
     describe "Application" $ do
       it "trivial" $
-        "(x: 1) 2" `isInferredAs` Singleton.int 1
+        "(x: 1) 2" `inferredAndChecks` Singleton.int 1
       it "simple" $
-        "(x /*: Int */: x) 2" `isInferredAs` Types.int full
+        "(x /*: Int */: x) 2" `inferredAndChecks` Types.int full
       it "wrong" $
         typeString "(x /*: Empty */: x) 1" & shouldFail
       it "higher order" $
