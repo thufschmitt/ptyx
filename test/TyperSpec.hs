@@ -78,7 +78,6 @@ spec = do
         in
         "(x /*: Int -> Int */: x)" `isInferredAs`
           Types.arrow (Arrow.atom intarrint intarrint)
-  describe "Inference only" $ do
     describe "Application" $ do
       it "trivial" $
         "(x: 1) 2" `isInferredAs` Singleton.int 1
@@ -89,7 +88,14 @@ spec = do
       it "higher order" $
         typeString "(x /*: Int -> Int */: x 1) (x /*: Int */: x)"
           `shouldSuccessAs` Types.int full
+
+  describe "Inference only" $ do
     it "undef type" $
       "undefined" `isInferredAs` full
     it "type-annot" $
       "1 /*: Int */" `isInferredAs` Types.int full
+
+  describe "Check only" $
+    describe "Application" $
+      it "identity" $
+        "(x: x) 1" `checksAgain` Types.int full
