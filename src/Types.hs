@@ -3,7 +3,7 @@ Module: Types
 Description: Tix used by Tix
 
 -}
-module Types (T, arrows, ints, arrow, int) where
+module Types (T, arrows, ints, arrow, int, undef) where
 
 
 import Prelude hiding (any)
@@ -51,3 +51,6 @@ arrow a = T { ints = empty, arrows = a }
 
 int :: Intervals.T -> T
 int i = T { ints = i, arrows = empty }
+
+undef :: T
+undef = full

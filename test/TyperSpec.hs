@@ -72,3 +72,5 @@ spec =
       `shouldSuccessAs` Types.int full
   it "Test undef type" $
     typeString "undefined" `shouldSuccessAs` full
+  it "Test type-annot" $
+    typeString "1 /*: Int */" `shouldSuccessAs` Types.int full

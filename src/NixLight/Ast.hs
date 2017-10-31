@@ -16,6 +16,7 @@ data ExprF r
   | Evar !Text
   | Eabs !Pattern !r
   | Eapp !r !r
+  | Eannot !Annot.T !r
   deriving (Ord, Eq, Functor, Show)
 
 type ExprLocF = WL.TF ExprF

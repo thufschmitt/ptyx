@@ -21,6 +21,11 @@ expr = cata (Fix . phi) where
             (NAbs param body) -> NL.Eabs (pat param) body
             (NApp e1 e2) -> NL.Eapp e1 e2
             (NSym x) -> NL.Evar x
+            (NAnnot e ':' annot) ->
+              case AnnotParser.typeAnnot (spanBegin loc) annot of
+                Tri.Success type_annot ->
+                  NL.Eannot type_annot e
+                Tri.Failure f -> error $ show f
             _ -> undefined -- TODO
     in
     Compose (WL.T loc descr)
