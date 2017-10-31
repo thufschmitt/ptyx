@@ -35,7 +35,7 @@ shouldFail (NParser.Success res) y =
 
 typeString :: String -> NParser.Result (W.Writer [Typer.Error.T] Types.T)
 typeString s =
-  (Infer.expr def . NixLight.FromHNix.expr) <$>
+  (Infer.inferExpr def . NixLight.FromHNix.expr) <$>
     NParser.parseNixStringLoc s
 
 spec :: Spec

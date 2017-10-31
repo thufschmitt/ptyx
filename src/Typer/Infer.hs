@@ -26,19 +26,19 @@ import Types.SetTheoretic
 
 type WithError = W.Writer [Error.T]
 
-expr :: Env.T -> NL.ExprLoc -> WithError Types.T
-expr env (WL.T loc descr) =
+inferExpr :: Env.T -> NL.ExprLoc -> WithError Types.T
+inferExpr env (WL.T loc descr) =
   case descr of
-      (NL.Econstant c) -> pure $ constant c
+      (NL.Econstant c) -> pure $ inferConstant c
       (NL.Eabs pat body) -> do
         (new_env, domain) <- updateEnv loc env Nothing pat
-        codomain <- expr new_env body
+        codomain <- inferExpr new_env body
         pure $
           Types.arrow $
             Arrow.T $ Bdd.atom $ Arrow.Arrow domain codomain
       (NL.Eapp fun arg) -> do
-        funType <- expr env fun
-        argType <- expr env arg
+        funType <- inferExpr env fun
+        argType <- inferExpr env arg
         checkSubtype loc funType $ Types.arrow full
         let Arrow.Arrow dom codom =
               Arrow.getApplication
@@ -51,16 +51,23 @@ expr env (WL.T loc descr) =
           Just t -> pure t
           Nothing -> W.writer (Types.undef, [Error.T loc "Undefined variable"])
       (NL.Eannot annot e) -> do
-        subExprType <- expr env e
+        subExprType <- inferExpr env e
         annotType <- Types.FromAnnot.parse env annot
         checkSubtype loc subExprType annotType
         pure annotType
       NL.EBinding binds body -> do
         updatedEnv <- bindings env binds
-        expr updatedEnv body
+        inferExpr updatedEnv body
 
-constant :: NL.Constant -> Types.T
-constant (NL.Cint i) = S.int i
+inferConstant :: NL.Constant -> Types.T
+inferConstant (NL.Cint i) = S.int i
+
+checkExpr :: Env.T -> Types.T -> NL.ExprLoc -> WithError ()
+checkExpr env expected (WL.T loc descr) =
+  case descr of
+      NL.Econstant c ->
+        checkSubtype loc (inferConstant c) expected
+      _ -> W.tell [Error.T loc "Not implemented"]
 
 bindings :: Env.T -> NL.Bindings -> WithError Env.T
 bindings env binds =
@@ -83,7 +90,13 @@ bindings env binds =
         NL.NamedVar { NL.annot, NL.rhs } -> do
           typingEnv <- initialEnv
           accuEnv <- accuEnv
-          rhsType <- expr typingEnv rhs
+          rhsType <-
+            case annot of
+              Nothing -> inferExpr typingEnv rhs
+              Just t -> do
+                annotType <- Types.FromAnnot.parse typingEnv t
+                checkExpr typingEnv annotType rhs
+                pure annotType
           pure $ Env.addVariable varName rhsType accuEnv)
       initialEnv
 
