@@ -62,7 +62,6 @@ spec = do
       "1" `inferredAndChecks` Singleton.int 1
     it "Annotated constant" $
       "2 /*: Int */" `inferredAndChecks` Types.int full
-  describe "Inference only" $ do
     describe "Lambdas" $ do
       it "trivial" $
         "x: 1" `isInferredAs`
@@ -82,6 +81,7 @@ spec = do
         in
         "(x /*: Int -> Int */: x)" `isInferredAs`
           Types.arrow (Arrow.T $ Bdd.atom $ Arrow.Arrow intarrint intarrint)
+  describe "Inference only" $ do
     describe "Application" $ do
       it "trivial" $
         "(x: 1) 2" `isInferredAs` Singleton.int 1
