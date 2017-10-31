@@ -67,6 +67,10 @@ checkExpr env expected (WL.T loc descr) =
   case descr of
       NL.Econstant c ->
         checkSubtype loc (inferConstant c) expected
+      NL.Evar v ->
+        case Env.lookupVariable v env of
+          Just t -> checkSubtype loc t expected
+          Nothing -> W.tell [Error.T loc "Undefined variable"]
       NL.Eannot annot e -> do
         annotType <- Types.FromAnnot.parse env annot
         checkSubtype loc annotType expected
