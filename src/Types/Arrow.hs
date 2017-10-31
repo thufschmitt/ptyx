@@ -8,7 +8,9 @@ Description: Arrow types
 module Types.Arrow (
   T(..), Arrow(..),
   domain, codomain,
-  getApplication
+  getApplication,
+  get,
+  decompose
   )
 where
 
@@ -105,3 +107,22 @@ getApplication (T arr) s = Bdd.foldBdd
     Bdd.fpDiff = const -- FIXME: this is not what we want
   }
   arr
+
+-- | The $A$ operator from the paper.
+-- @decompose arr@ returns the smallest intersection of arrows which contains
+-- @arr@
+--
+-- This is used for the checking of lambdas
+decompose :: forall t. SetTheoretic t => Bdd.DNF (Arrow t) -> [Arrow t]
+decompose = foldl (\accu (pos, _) -> squareUnion accu pos) [Arrow full empty]
+  where
+    squareUnion :: [Arrow t] -> [Arrow t] -> [Arrow t]
+    squareUnion iSet jSet =
+      (=<<)
+        (\(Arrow si ti) -> fmap
+          (\(Arrow sj tj) -> Arrow (si `cap` sj) (ti `cup` tj))
+          jSet)
+        iSet
+
+get :: T t -> Bdd.DNF (Arrow t)
+get (T bdd) = Bdd.toDNF bdd
