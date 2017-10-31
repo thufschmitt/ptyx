@@ -11,10 +11,17 @@ where
 
 import Types.SetTheoretic
 
+import Data.List (intercalate)
+
 data Bound = Finite Integer
            | PosInfinity
            | NegInfinity
-           deriving (Eq, Show)
+           deriving (Eq)
+
+instance Show Bound where
+  show (Finite x)  = show x
+  show PosInfinity = "+∞"
+  show NegInfinity = "-∞"
 
 instance Ord Bound where
   compare (Finite i1) (Finite i2) = compare i1 i2
@@ -25,13 +32,23 @@ instance Ord Bound where
   compare PosInfinity _ = GT
   compare _ PosInfinity = LT
 
-data Elt = Elt Bound Bound deriving (Eq, Ord, Show)
+data Elt = Elt Bound Bound deriving (Eq, Ord)
          -- Invariants: e = Elt b1 b2 => b1 <= b2
          --                              b1 /= PosInfinity
          --                              b2 /= NegInfinity
 
+instance Show Elt where
+  show (Elt NegInfinity PosInfinity) = "Int"
+  show (Elt min max)
+    | min == max = show min
+    | otherwise  = show min ++ " -- " ++ show max
+
 -- | The type of intervals
-newtype T = Intervals [Elt] deriving (Eq, Ord, Show)
+newtype T = Intervals [Elt] deriving (Eq, Ord)
+
+instance Show T where
+  show (Intervals elts) =
+    intercalate " | " $ map show elts
 
 -- | Constructs a bounded interval
 bounded :: Integer -> Integer -> T
