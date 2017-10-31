@@ -26,7 +26,12 @@ data T = T {
 
 instance Show T where
   show T{arrows, ints} =
-    intercalate " | " $ filter (not . (==) "⊥") [show arrows, show ints]
+    let display =
+          intercalate " | " $ filter (not . (==) "⊥") [show arrows, show ints]
+    in
+    if display == ""
+    then "⊥"
+    else display
 
 map2 :: (Arrow.T T -> Arrow.T T -> Arrow.T T)
        -> (Intervals.T -> Intervals.T -> Intervals.T)
