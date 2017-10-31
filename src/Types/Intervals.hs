@@ -47,6 +47,7 @@ instance Show Elt where
 newtype T = Intervals [Elt] deriving (Eq, Ord)
 
 instance Show T where
+  show (Intervals []) = "⊥"
   show (Intervals elts) =
     intercalate " | " $ map show elts
 

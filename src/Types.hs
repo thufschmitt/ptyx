@@ -1,3 +1,5 @@
+{-# LANGUAGE NamedFieldPuns #-}
+
 {-|
 Module: Types
 Description: Tix used by Tix
@@ -7,6 +9,7 @@ module Types (T, arrows, ints, arrow, int, undef) where
 
 
 import Prelude hiding (any)
+import Data.List (intercalate)
 import Types.SetTheoretic
 import qualified Types.Arrow as Arrow
 import qualified Types.Intervals as Intervals
@@ -19,7 +22,11 @@ data T = T {
              -- | The integral part of the type
            , ints :: Intervals.T
            }
-           deriving (Eq, Ord, Show)
+           deriving (Eq, Ord)
+
+instance Show T where
+  show T{arrows, ints} =
+    intercalate " | " $ filter (not . (==) "⊥") [show arrows, show ints]
 
 map2 :: (Arrow.T T -> Arrow.T T -> Arrow.T T)
        -> (Intervals.T -> Intervals.T -> Intervals.T)

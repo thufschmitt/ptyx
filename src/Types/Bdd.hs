@@ -19,7 +19,22 @@ import Types.SetTheoretic
 data T a
     = Leaf Bool
     | Split a (T a) (T a)
-    deriving (Eq, Ord, Show)
+    deriving (Eq, Ord)
+
+instance Show a => Show (T a) where
+  show x
+    | isTriviallyEmpty x = "⊥"
+    | isTriviallyFull  x = "⊤"
+    | otherwise          =
+      foldBdd FoldParam{
+        fpEmpty = "⊥",
+        fpFull = "⊤",
+        fpAtom = show,
+        fpCup = \x y -> x ++ " | " ++ y,
+        fpCap = \x y -> x ++ " & " ++ y,
+        fpDiff = \x y -> x ++ " \\ " ++ y
+      }
+      x
 
 -- | @atom x@ Returns the Bdd containing only the atom @x@
 atom :: a -> T a

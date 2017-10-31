@@ -20,10 +20,18 @@ import Data.Monoid ((<>))
 import qualified Data.Set as Set
 
 -- | Atomic arrow type
-data Arrow t = Arrow t t deriving (Eq, Ord, Show)
+data Arrow t = Arrow t t deriving (Eq, Ord)
+
+instance Show t => Show (Arrow t) where
+  show (Arrow t1 t2) = "(" ++ show t1 ++ ") -> " ++ show t2
 
 -- | Arrow type
-newtype T t = T (Bdd.T (Arrow t)) deriving (Eq, Ord, Show, SetTheoretic_)
+newtype T t = T (Bdd.T (Arrow t)) deriving (Eq, Ord, SetTheoretic_)
+
+instance Show t => Show (T t) where
+  show (T x) = case show x of
+    "⊥" -> "⊥"
+    tt -> "(" ++ tt ++ ") & (⊥ -> ⊤)"
 
 -- | Returns the domain of an atomic arrow type
 domain :: Arrow t -> t
