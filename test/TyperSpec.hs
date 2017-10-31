@@ -65,22 +65,19 @@ spec = do
     describe "Lambdas" $ do
       it "trivial" $
         "x: 1" `isInferredAs`
-          Types.arrow (Arrow.T $ Bdd.atom $ Arrow.Arrow full (Singleton.int 1))
+          Types.arrow (Arrow.atom full (Singleton.int 1))
       it "trivial annotated" $
         "x /*: Int */: 1" `isInferredAs`
-          Types.arrow
-            (Arrow.T $ Bdd.atom $ Arrow.Arrow (Types.int full) (Singleton.int 1))
+          Types.arrow (Arrow.atom (Types.int full) (Singleton.int 1))
       it "simple annotated" $
         "x /*: Int */: x" `isInferredAs`
-          Types.arrow
-            (Arrow.T $ Bdd.atom $ Arrow.Arrow (Types.int full) (Types.int full))
+          Types.arrow (Arrow.atom (Types.int full) (Types.int full))
       it "higher order" $
         let intarrint =
-              Types.arrow
-                (Arrow.T $ Bdd.atom $ Arrow.Arrow (Types.int full) (Types.int full))
+              Types.arrow (Arrow.atom (Types.int full) (Types.int full))
         in
         "(x /*: Int -> Int */: x)" `isInferredAs`
-          Types.arrow (Arrow.T $ Bdd.atom $ Arrow.Arrow intarrint intarrint)
+          Types.arrow (Arrow.atom intarrint intarrint)
   describe "Inference only" $ do
     describe "Application" $ do
       it "trivial" $
