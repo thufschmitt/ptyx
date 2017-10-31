@@ -56,10 +56,12 @@ parseString :: String -> NParser.Result Ast.ExprLoc
 parseString s = NixLight.FromHNix.expr <$> NParser.parseNixStringLoc s
 
 spec :: Spec
-spec =
+spec = do
   describe "Inference and check tests" $ do
     it "Integer constant" $
       "1" `inferredAndChecks` Singleton.int 1
+    it "Annotated constant" $
+      "2 /*: Int */" `inferredAndChecks` Types.int full
   describe "Inference only" $ do
     describe "Lambdas" $ do
       it "trivial" $
