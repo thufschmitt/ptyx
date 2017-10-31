@@ -71,6 +71,14 @@ checkExpr env expected (WL.T loc descr) =
         annotType <- Types.FromAnnot.parse env annot
         checkSubtype loc annotType expected
         checkExpr env annotType e
+      NL.Eabs pat body -> do
+        checkSubtype loc expected $ Types.arrow full
+        let arrows = Arrow.decompose $ Arrow.get $ Types.arrows expected
+        mapM_
+          (\(Arrow.Arrow dom codom) -> do
+            (newEnv, _) <- updateEnv loc env (Just dom) pat
+            checkExpr newEnv codom body)
+          arrows
       _ -> W.tell [Error.T loc "Not implemented"]
 
 bindings :: Env.T -> NL.Bindings -> WithError Env.T
