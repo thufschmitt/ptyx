@@ -24,7 +24,7 @@ import Types.SetTheoretic
 type WithError = W.Writer [Error.T]
 
 expr :: Env.T -> NL.ExprLoc -> WithError Types.T
-expr env (Fix (Compose (WL.T loc descr))) =
+expr env (WL.T loc descr) =
   case descr of
       (NL.Econstant c) -> pure $ constant c
       (NL.Eabs pat body) -> do

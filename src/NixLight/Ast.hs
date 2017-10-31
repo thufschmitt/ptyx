@@ -1,7 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE DeriveFunctor #-}
-{-# LANGUAGE TemplateHaskell #-}
-
 -- | A simplified version of Nix Ast
 module NixLight.Ast where
 
@@ -11,18 +7,15 @@ import Text.Show.Deriving
 import qualified NixLight.WithLoc as WL
 import qualified NixLight.Annotations as Annot
 
-data ExprF r
+data NoLocExpr
   = Econstant !Constant
   | Evar !Text
-  | Eabs !Pattern !r
-  | Eapp !r !r
-  | Eannot !Annot.T !r
-  deriving (Ord, Eq, Functor, Show)
+  | Eabs !Pattern !ExprLoc
+  | Eapp !ExprLoc !ExprLoc
+  | Eannot !Annot.T !ExprLoc
+  deriving (Ord, Eq, Show)
 
-type ExprLocF = WL.TF ExprF
-
-type Expr = Fix ExprF
-type ExprLoc = Fix ExprLocF
+type ExprLoc = WL.T NoLocExpr
 
 newtype Constant
   = Cint Integer
@@ -33,5 +26,3 @@ data Pattern
   = Pvar !Text
   | Pannot !Annot.T !Pattern
   deriving (Ord, Eq, Show)
-
-$(deriveShow1 ''ExprF)

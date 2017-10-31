@@ -13,7 +13,7 @@ import Nix.Expr
 import Nix.Atoms
 
 expr :: NExprLoc -> NL.ExprLoc
-expr = cata (Fix . phi) where
+expr = cata phi where
   phi (Compose (Ann loc e)) =
     let descr =
           case e of
@@ -28,7 +28,7 @@ expr = cata (Fix . phi) where
                 Tri.Failure f -> error $ show f
             _ -> undefined -- TODO
     in
-    Compose (WL.T loc descr)
+    WL.T loc descr
 
 constant :: NAtom -> NL.Constant
 constant (NInt i) = NL.Cint i
