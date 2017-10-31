@@ -67,6 +67,10 @@ checkExpr env expected (WL.T loc descr) =
   case descr of
       NL.Econstant c ->
         checkSubtype loc (inferConstant c) expected
+      NL.Eannot annot e -> do
+        annotType <- Types.FromAnnot.parse env annot
+        checkSubtype loc annotType expected
+        checkExpr env annotType e
       _ -> W.tell [Error.T loc "Not implemented"]
 
 bindings :: Env.T -> NL.Bindings -> WithError Env.T

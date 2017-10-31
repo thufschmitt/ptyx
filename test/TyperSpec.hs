@@ -4,6 +4,7 @@ import Data.Default
 import Test.Hspec
 import qualified Nix.Parser as NParser
 import qualified NixLight.FromHNix
+import qualified NixLight.Ast as Ast
 import qualified Typer.Infer as Infer
 import qualified Typer.Error
 import qualified Types.Singletons as Singleton
@@ -26,6 +27,21 @@ shouldSuccessAs (NParser.Success res) y =
     (x, []) -> x `shouldBe` y
     (_, errs) -> expectationFailure (show errs)
 
+isInferredAs :: String -> Types.T -> Expectation
+isInferredAs prog typ =
+  let ast = parseString prog in
+  (Infer.inferExpr def <$> ast) `shouldSuccessAs` typ
+
+checksAgain :: String -> Types.T -> Expectation
+checksAgain prog typ =
+  let ast = parseString prog in
+  (Infer.checkExpr def typ <$> ast) `shouldSuccessAs` ()
+
+inferredAndChecks :: String -> Types.T -> Expectation
+inferredAndChecks prog typ = do
+  isInferredAs prog typ
+  checksAgain prog typ
+
 shouldFail (NParser.Failure f) _ = expectationFailure (show f)
 shouldFail (NParser.Success res) y =
   case W.runWriter res of
@@ -34,43 +50,47 @@ shouldFail (NParser.Success res) y =
     (_, errs) -> pure ()
 
 typeString :: String -> NParser.Result (W.Writer [Typer.Error.T] Types.T)
-typeString s =
-  (Infer.inferExpr def . NixLight.FromHNix.expr) <$>
-    NParser.parseNixStringLoc s
+typeString s = Infer.inferExpr def <$> parseString s
+
+parseString :: String -> NParser.Result Ast.ExprLoc
+parseString s = NixLight.FromHNix.expr <$> NParser.parseNixStringLoc s
 
 spec :: Spec
 spec =
-  describe "Typing tests" $ do
-  it "Test integer constant" $
-    typeString "1" `shouldSuccessAs` Singleton.int 1
-  it "Test trivial lambda" $
-    typeString "x: 1" `shouldSuccessAs`
-      Types.arrow (Arrow.T $ Bdd.atom $ Arrow.Arrow full (Singleton.int 1))
-  it "Test trivial annotated lambda" $
-    typeString "x /*: Int */: 1" `shouldSuccessAs`
-      Types.arrow
-        (Arrow.T $ Bdd.atom $ Arrow.Arrow (Types.int full) (Singleton.int 1))
-  it "Test simple annotated lambda" $
-    typeString "x /*: Int */: x" `shouldSuccessAs`
-      Types.arrow
-        (Arrow.T $ Bdd.atom $ Arrow.Arrow (Types.int full) (Types.int full))
-  it "Test application" $
-    typeString "(x: 1) 2" `shouldSuccessAs` Singleton.int 1
-  it "Test application2" $
-    typeString "(x /*: Int */: x) 2" `shouldSuccessAs` Types.int full
-  it "Test wrong application" $
-    typeString "(x /*: Empty */: x) 1" & shouldFail
-  it "Test higher order" $
-    let intarrint =
+  describe "Inference and check tests" $ do
+    it "Integer constant" $
+      "1" `inferredAndChecks` Singleton.int 1
+  describe "Inference only" $ do
+    describe "Lambdas" $ do
+      it "trivial" $
+        "x: 1" `isInferredAs`
+          Types.arrow (Arrow.T $ Bdd.atom $ Arrow.Arrow full (Singleton.int 1))
+      it "trivial annotated" $
+        "x /*: Int */: 1" `isInferredAs`
+          Types.arrow
+            (Arrow.T $ Bdd.atom $ Arrow.Arrow (Types.int full) (Singleton.int 1))
+      it "simple annotated" $
+        "x /*: Int */: x" `isInferredAs`
           Types.arrow
             (Arrow.T $ Bdd.atom $ Arrow.Arrow (Types.int full) (Types.int full))
-    in
-    typeString "(x /*: Int -> Int */: x)" `shouldSuccessAs`
-      Types.arrow (Arrow.T $ Bdd.atom $ Arrow.Arrow intarrint intarrint)
-  it "Test higher order apply" $
-    typeString "(x /*: Int -> Int */: x 1) (x /*: Int */: x)"
-      `shouldSuccessAs` Types.int full
-  it "Test undef type" $
-    typeString "undefined" `shouldSuccessAs` full
-  it "Test type-annot" $
-    typeString "1 /*: Int */" `shouldSuccessAs` Types.int full
+      it "higher order" $
+        let intarrint =
+              Types.arrow
+                (Arrow.T $ Bdd.atom $ Arrow.Arrow (Types.int full) (Types.int full))
+        in
+        "(x /*: Int -> Int */: x)" `isInferredAs`
+          Types.arrow (Arrow.T $ Bdd.atom $ Arrow.Arrow intarrint intarrint)
+    describe "Application" $ do
+      it "trivial" $
+        "(x: 1) 2" `isInferredAs` Singleton.int 1
+      it "simple" $
+        "(x /*: Int */: x) 2" `isInferredAs` Types.int full
+      it "wrong" $
+        typeString "(x /*: Empty */: x) 1" & shouldFail
+      it "higher order" $
+        typeString "(x /*: Int -> Int */: x 1) (x /*: Int */: x)"
+          `shouldSuccessAs` Types.int full
+    it "undef type" $
+      "undefined" `isInferredAs` full
+    it "type-annot" $
+      "1 /*: Int */" `isInferredAs` Types.int full
