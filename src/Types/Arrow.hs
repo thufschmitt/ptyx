@@ -7,7 +7,7 @@ Description: Arrow types
 
 module Types.Arrow (
   T(..), Arrow(..),
-  domain, codomain,
+  domain, codomain, atom,
   getApplication,
   get,
   decompose
@@ -42,6 +42,10 @@ domain (Arrow d _) = d
 -- | Returns the codomain of an atomic arrow type
 codomain :: Arrow t -> t
 codomain (Arrow _ c) = c
+
+-- | Builds an atomic arrow type
+atom :: t -> t -> T t
+atom dom codom = T (Bdd.atom $ Arrow dom codom)
 
 isEmptyA :: SetTheoretic t => T t -> Bool
 isEmptyA (T a)

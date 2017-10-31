@@ -83,6 +83,9 @@ checkExpr env expected (WL.T loc descr) =
             (newEnv, _) <- updateEnv loc env (Just dom) pat
             checkExpr newEnv codom body)
           arrows
+      NL.Eapp fun arg -> do
+        argType <- inferExpr env arg
+        checkExpr env (Types.arrow $ Arrow.atom argType expected) fun
       _ -> W.tell [Error.T loc "Not implemented"]
 
 bindings :: Env.T -> NL.Bindings -> WithError Env.T
