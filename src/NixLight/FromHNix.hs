@@ -1,9 +1,13 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE LambdaCase #-}
 
 module NixLight.FromHNix where
 
 import Data.Fix (cata, Fix(..))
 import Data.Functor.Compose
+import qualified Data.Map.Strict as Map
+import           Data.Map.Strict (Map)
+import qualified Data.Text as T
 import qualified NixLight.Ast as NL
 import qualified NixLight.WithLoc as WL
 import qualified NixLight.Annotations.Parser as AnnotParser
@@ -26,6 +30,8 @@ expr = cata phi where
                 Tri.Success type_annot ->
                   NL.Eannot type_annot e
                 Tri.Failure f -> error $ show f
+            NLet binds e ->
+              NL.EBinding (bindings binds) e
             _ -> undefined -- TODO
     in
     WL.T loc descr
@@ -42,3 +48,33 @@ pat (ParamAnnot p ':' annot) =
       NL.Pannot type_annot (pat p)
     Tri.Failure f -> error $ show f
 pat _ = undefined -- TODO
+
+bindings :: [Binding NL.ExprLoc] -> NL.Bindings
+bindings =
+  foldl (\accu binding ->
+    case binding of
+      Inherit Nothing names -> foldl addInherit accu names
+      Inherit (Just e) vars  -> foldl (addQualifiedInherit e) accu vars
+      NamedVar attrPath rhs -> addNamedVar attrPath rhs accu
+      )
+    Map.empty
+  where
+    addInherit :: NL.Bindings -> NKeyName NL.ExprLoc -> NL.Bindings
+    addInherit accu = \case
+      -- FIXME: Actually some trivial dynamic keys such as @"foo"@ are
+      -- considered by nix as static, so we should also allow them here
+      DynamicKey _ -> error "Dynamic keys are not allowed"
+      StaticKey name -> addIfAbsent name NL.Inherit accu
+
+    addQualifiedInherit baseExpr accu = \case
+      DynamicKey _ -> error "Dynamic keys are not allowed"
+      StaticKey name -> error "Field access not implemented yet"
+
+    addNamedVar [StaticKey name] rhs =
+      addIfAbsent name (NL.NamedVar Nothing rhs)
+    addNamedVar _ _ = error "Not implemented or forbidden lhs"
+
+    addIfAbsent :: T.Text -> NL.BindingDef -> NL.Bindings -> NL.Bindings
+    addIfAbsent =
+      Map.insertWithKey
+        (\kName _ _ -> error $ "Duplicate binding: " ++ T.unpack kName)

@@ -1,4 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE NamedFieldPuns #-}
 
 module Typer.Infer where
 
@@ -6,6 +8,7 @@ import Data.Functor.Compose
 
 import Data.Fix (Fix(Fix), cata)
 import Data.Maybe (fromMaybe)
+import qualified Data.Map as Map
 import qualified NixLight.Ast as NL
 import qualified NixLight.WithLoc as WL
 import qualified NixLight.Annotations as Annot
@@ -52,9 +55,38 @@ expr env (WL.T loc descr) =
         annotType <- Types.FromAnnot.parse env annot
         checkSubtype loc subExprType annotType
         pure annotType
+      NL.EBinding binds body -> do
+        updatedEnv <- bindings env binds
+        expr updatedEnv body
 
 constant :: NL.Constant -> Types.T
 constant (NL.Cint i) = S.int i
+
+bindings :: Env.T -> NL.Bindings -> WithError Env.T
+bindings env binds =
+  let initialEnv = getInitialEnv (pure env) binds in
+  getFinalEnv initialEnv binds
+
+  where
+    getInitialEnv =
+      Map.foldlWithKey (\accuEnv varName -> \case
+        NL.Inherit -> accuEnv
+        NL.NamedVar { NL.annot, NL.rhs } -> do
+          env <- accuEnv
+          annotType <- case annot of
+            Nothing -> pure Types.undef
+            Just a -> Types.FromAnnot.parse env a
+          pure $ Env.addVariable varName annotType env)
+    getFinalEnv initialEnv =
+      Map.foldlWithKey (\accuEnv varName -> \case
+        NL.Inherit -> accuEnv
+        NL.NamedVar { NL.annot, NL.rhs } -> do
+          typingEnv <- initialEnv
+          accuEnv <- accuEnv
+          rhsType <- expr typingEnv rhs
+          pure $ Env.addVariable varName rhsType accuEnv)
+      initialEnv
+
 
 updateEnv :: WL.Loc
           -> Env.T
