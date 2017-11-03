@@ -65,4 +65,4 @@ ops = [
 atom = Tok.parens typ <|> baseType <?> "simple type"
 
 typeAnnot :: Delta -> T.Text -> Tf.Result Annot.T
-typeAnnot delta = Tf.parseString typ delta . T.unpack
+typeAnnot delta = Tf.parseString (Tf.space *> typ) delta . T.unpack
