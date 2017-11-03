@@ -9,6 +9,8 @@ import Data.Functor.Compose
 import Data.Fix (Fix(Fix), cata)
 import Data.Maybe (fromMaybe)
 import qualified Data.Map as Map
+import           Data.Monoid ((<>))
+import qualified Data.Text as T
 import qualified NixLight.Ast as NL
 import qualified NixLight.WithLoc as WL
 import qualified NixLight.Annotations as Annot
@@ -138,4 +140,6 @@ checkSubtype :: WL.Loc -> Types.T -> Types.T -> WithError ()
 checkSubtype loc t1 t2 =
   if sub t1 t2
   then pure ()
-  else W.tell [Error.T loc "Subtyping failure"]
+  else W.tell [Error.T loc $ "Expected a subtype of "
+                               <> T.pack (show t2)
+                               <> " but got " <> T.pack (show t1)]
