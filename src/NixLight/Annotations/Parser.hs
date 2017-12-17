@@ -37,8 +37,8 @@ annotateLocation3 p = do
   let span = SrcSpan begin end
   pure $ \x y -> WL.T span (res x y)
 
-ident :: Tf.Parser (WL.T T.Text)
-ident = annotateLocation $ Tok.ident TStyle.emptyIdents
+ident :: Tf.Parser T.Text
+ident = Tok.ident TStyle.emptyIdents
 
 baseType :: Tf.Parser Annot.T
 baseType = do

@@ -9,7 +9,7 @@ import qualified NixLight.WithLoc as WL
 
 
 data NoAnnotT
-  = Ident !(WL.T Text)
+  = Ident !Text
   | Arrow !T !T
   | Or !T !T
   | And !T !T
