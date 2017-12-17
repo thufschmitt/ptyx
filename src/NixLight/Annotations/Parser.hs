@@ -11,13 +11,10 @@ import           Text.Trifecta.Delta (Delta)
 import qualified Text.Parser.Token.Style as TStyle
 import qualified Text.Parser.Token as Tok
 import           Text.Parser.Expression as PExpr
-import           Text.Parser.Combinators (skipMany, optional, choice)
 import qualified Data.Text as T
 import           Nix.Expr (SrcSpan(..))
-import           Data.Fix
 import           Control.Applicative ((<|>))
 
-import qualified Data.Map.Strict as Map
 import           Data.Map.Strict (Map)
 
 -- Stolen form hnix as it is unexported there
@@ -26,16 +23,16 @@ annotateLocation p = do
   begin <- Tf.position
   res   <- p
   end   <- Tf.position
-  let span = SrcSpan begin end
-  pure $ WL.T span res
+  let srcspan = SrcSpan begin end
+  pure $ WL.T srcspan res
 
 annotateLocation3 :: Tf.Parser (a -> b -> c) -> Tf.Parser (a -> b -> WL.T c)
 annotateLocation3 p = do
   begin <- Tf.position
   res   <- p
   end   <- Tf.position
-  let span = SrcSpan begin end
-  pure $ \x y -> WL.T span (res x y)
+  let srcspan = SrcSpan begin end
+  pure $ \x y -> WL.T srcspan (res x y)
 
 ident :: Tf.Parser T.Text
 ident = Tok.ident TStyle.emptyIdents

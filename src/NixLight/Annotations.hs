@@ -3,7 +3,6 @@ module NixLight.Annotations
   ) where
 
 import Data.Text (Text)
-import Data.Fix
 
 import qualified NixLight.WithLoc as WL
 
