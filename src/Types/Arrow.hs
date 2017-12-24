@@ -67,10 +67,10 @@ isEmptyA (T a)
           (Set.fromList p)
 
       subCupDomains t p =
-        sub (cupN $ fmap domain p) t
+        t <: cupN (fmap domain p)
 
       superCapCodomains t p =
-        sub t (capN $ fmap codomain p)
+        capN (fmap codomain p) <: t
 
       forallStrictSubset f elts = forallStrictSubset' f elts Set.empty
 
