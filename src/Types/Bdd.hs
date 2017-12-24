@@ -36,11 +36,12 @@ instance Show a => Show (T a) where
         fpEmpty = "⊥",
         fpFull = "⊤",
         fpAtom = show,
-        fpCup = \x y -> x ++ " | " ++ y,
-        fpCap = \x y -> x ++ " & " ++ y,
-        fpDiff = \x y -> x ++ " \\ " ++ y
+        fpCup = \x y -> parens x ++ " | " ++ parens y,
+        fpCap = \x y -> parens x ++ " & " ++ parens y,
+        fpDiff = \x y -> parens x ++ " \\ " ++ parens y
       }
       x
+    where parens x = "(" ++ x ++ ")"
 
 -- | @atom x@ Returns the Bdd containing only the atom @x@
 atom :: a -> T a
