@@ -117,11 +117,10 @@ instance Ord a => SetTheoretic_ (T a) where
     recurse diff b1 b2 a1 c1 d1 a2 c2 d2
 
 recurse :: Ord a => (t1 -> t -> T a) -> t1 -> t -> a -> t1 -> t1 -> a -> t -> t -> T a
-recurse op b1 b2 a1 c1 d1 a2 c2 d2 =
-  case () of _
-              | a1 == a2 -> Split a1 (op c1 c2) (op d1 d2)
-              | a1 < a2 -> Split a1 (op c1 b2) (op d1 b2)
-              | otherwise -> Split a2 (op b1 c2) (op b1 d2)
+recurse op b1 b2 a1 c1 d1 a2 c2 d2
+        | a1 == a2 = Split a1 (op c1 c2) (op d1 d2)
+        | a1 < a2 = Split a1 (op c1 b2) (op d1 b2)
+        | otherwise = Split a2 (op b1 c2) (op b1 d2)
 
 -- | Returns a DNF formula from a Bdd
 --
