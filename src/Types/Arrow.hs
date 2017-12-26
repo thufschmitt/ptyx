@@ -89,17 +89,20 @@ instance SetTheoretic t => SetTheoretic (T t) where
 
 -- | @getApplication arr s@ returns the smaller arrow atom type @s -> t@ such
 -- that @s -> t <: arr@
-getApplication :: forall t. SetTheoretic t => T t -> t -> Arrow t
-getApplication (T arr) s = Bdd.foldBdd
-  Bdd.FoldParam{
-    Bdd.fpEmpty = Arrow empty full,
-    Bdd.fpFull = Arrow full empty,
-    Bdd.fpAtom = \(Arrow dom codom) ->
-      Arrow (dom `cap` s) codom,
-    Bdd.fpCup = \(Arrow t1 t2) (Arrow u1 u2) ->
-      Arrow (cap t1 u1) (cup t2 u2),
-    Bdd.fpCap = \(Arrow t1 t2) (Arrow u1 u2) ->
+getApplication :: forall t. SetTheoretic t => Bdd.DNF (Arrow t) -> t -> Arrow t
+getApplication arr s =
+  foldl
+    (\(Arrow t1 t2) (pos, _) ->
+      let Arrow u1 u2 = foldl aux_cap (Arrow full empty) pos in
+      Arrow (cap t1 u1) (cup t2 u2))
+    (Arrow empty full)
+    arr
+  where
+    aux_cap :: Arrow t -> Arrow t -> Arrow t
+    aux_cap a1 a2 =
       let
+        Arrow t1 t2 = aux_atom a1
+        Arrow u1 u2 = aux_atom a2
         s1 = diff t1 u1
         s2 = diff u1 t1
       in
@@ -107,10 +110,10 @@ getApplication (T arr) s = Bdd.foldBdd
       then Arrow t1 t2
       else if isEmpty s2
       then Arrow u1 u2
-      else Arrow (t1 `cup` u1) (t2 `cup` u2),
-    Bdd.fpDiff = const -- FIXME: this is not what we want
-  }
-  arr
+      else Arrow (t1 `cup` u1) (t2 `cup` u2)
+    aux_atom :: Arrow t -> Arrow t
+    aux_atom (Arrow dom codom) =
+      Arrow (dom `cap` s) codom
 
 -- | The $A$ operator from the paper.
 -- @decompose arr@ returns the smallest intersection of arrows which contains
