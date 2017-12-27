@@ -9,6 +9,7 @@ module Types.Arrow (
   T(..), Arrow(..),
   domain, codomain, atom,
   getApplication,
+  compDomain,
   get,
   decompose
   )
@@ -82,54 +83,63 @@ isEmptyA (T a)
                           [ (Set.delete x elts, Set.insert x removedElts)
                           | x <- Set.toList elts ]
           in
-          all (uncurry $ forallStrictSubset' f) directsubsets
+          all (\(subset, compl) ->
+               f (Set.toList subset) (Set.toList compl)
+               && forallStrictSubset' f subset compl)
+              directsubsets
 
 instance SetTheoretic t => SetTheoretic (T t) where
   isEmpty = isEmptyA
 
--- | @getApplication arr s@ returns the smaller arrow atom type @s -> t@ such
+-- | @getApplication arr s@ returns the biggest type @t@ such
 -- that @s -> t <: arr@
-getApplication :: forall t. SetTheoretic t => Bdd.DNF (Arrow t) -> t -> Arrow t
+getApplication :: forall t. SetTheoretic t => Bdd.DNF (Arrow t) -> t -> t
 getApplication arr s =
-  foldl
-    (\(Arrow t1 t2) (pos, _) ->
-      let Arrow u1 u2 = foldl aux_cap (Arrow full empty) pos in
-      Arrow (cap t1 u1) (cup t2 u2))
-    (Arrow empty full)
-    arr
+  cupN $ Set.map elemApp arr
   where
-    aux_cap :: Arrow t -> Arrow t -> Arrow t
-    aux_cap a1 a2 =
-      let
-        Arrow t1 t2 = aux_atom a1
-        Arrow u1 u2 = aux_atom a2
-        s1 = diff t1 u1
-        s2 = diff u1 t1
-      in
-      if isEmpty s1
-      then Arrow t1 t2
-      else if isEmpty s2
-      then Arrow u1 u2
-      else Arrow (t1 `cup` u1) (t2 `cup` u2)
-    aux_atom :: Arrow t -> Arrow t
-    aux_atom (Arrow dom codom) =
-      Arrow (dom `cap` s) codom
+    elemApp :: (Set.Set (Arrow t), Set.Set (Arrow t)) -> t
+    elemApp (pos, _) =
+      foldStrictSubsets empty addElemApp pos Set.empty
+    addElemApp :: t -> Set.Set (Arrow t) -> Set.Set (Arrow t) -> t
+    addElemApp acc subset compl =
+      if s <: cupN (Set.map domain subset)
+      then acc
+      else acc `cup` capN (Set.map codomain compl)
+    foldStrictSubsets ::
+      Ord a => b -> (b -> Set.Set a -> Set.Set a -> b)
+            -> Set.Set a -> Set.Set a-> b
+    foldStrictSubsets foldInit f elts removedElts
+      | Set.null elts = foldInit
+      | otherwise =
+        let
+          directsubsets =
+                        [ (Set.delete x elts, Set.insert x removedElts)
+                        | x <- Set.toList elts ]
+        in
+        foldl
+          (\accu (subset, compl) ->
+            f
+              (foldStrictSubsets accu f subset compl)
+              subset
+              compl)
+          foldInit
+          directsubsets
 
--- | The $A$ operator from the paper.
--- @decompose arr@ returns the smallest intersection of arrows which contains
--- @arr@
---
+-- | Get the domain of a composed arrow
+compDomain :: forall t. SetTheoretic t => Bdd.DNF (Arrow t) -> t
+compDomain = capN . Set.map (cupN . Set.map domain . fst)
+
 -- This is used for the checking of lambdas
-decompose :: forall t. SetTheoretic t => Bdd.DNF (Arrow t) -> [Arrow t]
-decompose = foldl (\accu (pos, _) -> squareUnion accu pos) [Arrow full empty]
+decompose :: forall t. SetTheoretic t => Bdd.DNF (Arrow t) -> Set.Set (Arrow t)
+decompose = foldl (\accu (pos, _) -> squareUnion accu pos) (Set.singleton (Arrow full empty))
   where
-    squareUnion :: [Arrow t] -> [Arrow t] -> [Arrow t]
+    squareUnion :: Set.Set (Arrow t) -> Set.Set (Arrow t) -> Set.Set (Arrow t)
     squareUnion iSet jSet =
-      (=<<)
-        (\(Arrow si ti) -> fmap
+      foldr mappend mempty $ Set.map
+        (\(Arrow si ti) -> Set.map
           (\(Arrow sj tj) -> Arrow (si `cap` sj) (ti `cup` tj))
           jSet)
         iSet
 
-get :: T t -> Bdd.DNF (Arrow t)
+get :: Ord t => T t -> Bdd.DNF (Arrow t)
 get (T bdd) = Bdd.toDNF bdd

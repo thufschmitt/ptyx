@@ -42,11 +42,12 @@ inferExpr env (WL.T loc descr) =
         funType <- inferExpr env fun
         argType <- inferExpr env arg
         checkSubtype loc funType $ Types.arrow full
-        let Arrow.Arrow dom codom =
+        let funTypeArrow = Arrow.get $ Types.arrows funType
+        checkSubtype loc argType $ Arrow.compDomain funTypeArrow
+        let codom =
               Arrow.getApplication
-                (Types.arrows funType)
+                funTypeArrow
                 argType
-        checkSubtype loc argType dom
         pure codom
       (NL.Evar v) ->
         case Env.lookupVariable v env of
