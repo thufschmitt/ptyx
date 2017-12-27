@@ -26,19 +26,18 @@ class Ord a => SetTheoretic_ a where
   (/\) :: a -> a -> a
   (\\) :: a -> a -> a
 
-  -- | N-ary versions of the set-theoretic operators
-  cupN :: [a] -> a
-  capN :: [a] -> a
-
   (\/) = cup
   (/\) = cap
   (\\) = diff
 
-  cupN = foldl cup empty
-  capN = foldl cap full
-
   neg = diff full
   diff x y = x \\ neg y
+
+-- | N-ary versions of the set-theoretic operators
+cupN :: (SetTheoretic a, Foldable t) => t a -> a
+capN :: (SetTheoretic a, Foldable t) => t a -> a
+cupN = foldl cup empty
+capN = foldl cap full
 
 -- | SetTheoretic with tests for emptyness and containment
 --
