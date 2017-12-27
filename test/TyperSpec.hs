@@ -83,15 +83,15 @@ spec = do
         "(x: 1) 2" `inferredAndChecks` Singleton.int 1
       it "simple" $
         "(x /*: Int */: x) 2" `inferredAndChecks` Types.int full
-      it "wrong" $
-        typeString "(x /*: Empty */: x) 1" & shouldFail
       it "higher order" $
-        typeString "(x /*: Int -> Int */: x 1) (x /*: Int */: x)"
-          `shouldSuccessAs` Types.int full
+        "(x /*: Int -> Int */: x 1) (x /*: Int */: x)"
+          `inferredAndChecks` Types.int full
 
   describe "Inference only" $ do
+    it "wrong" $
+      typeString "(x /*: Empty */: x) 1" & shouldFail
     it "undef type" $
-      "undefined" `isInferredAs` full
+      "undefined" `isInferredAs` empty
     it "type-annot" $
       "1 /*: Int */" `isInferredAs` Types.int full
 
