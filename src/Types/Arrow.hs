@@ -53,25 +53,26 @@ isEmptyA (T a)
   | Bdd.isTriviallyEmpty a = True
   | Bdd.isTriviallyFull a = False
   | otherwise =
-    let arrow = Bdd.get a in
-    all emptyIntersect arrow
+    let arrow = Bdd.toDNF a in
+    anySet emptyIntersect arrow
 
     where
+      anySet prop = Set.foldl (\accu elt -> accu && prop elt) True
       emptyIntersect (pos, neg) =
-        any (sub' pos) neg
+        anySet (sub' pos) neg
 
       sub' p (Arrow t1 t2) =
         subCupDomains t1 p &&
         superCapCodomains t2 p &&
         forallStrictSubset
           (\subset comp -> subCupDomains t1 subset || superCapCodomains t1 comp)
-          (Set.fromList p)
+          p
 
       subCupDomains t p =
-        t <: cupN (fmap domain p)
+        t <: cupN (Set.map domain p)
 
       superCapCodomains t p =
-        capN (fmap codomain p) <: t
+        capN (Set.map codomain p) <: t
 
       forallStrictSubset f elts = forallStrictSubset' f elts Set.empty
 
@@ -84,7 +85,7 @@ isEmptyA (T a)
                           | x <- Set.toList elts ]
           in
           all (\(subset, compl) ->
-               f (Set.toList subset) (Set.toList compl)
+               f subset compl
                && forallStrictSubset' f subset compl)
               directsubsets
 

@@ -14,7 +14,6 @@ module Types.Bdd (
   T,
   atom, isTriviallyFull, isTriviallyEmpty,
   foldBdd, FoldParam(..),
-  get,
   DNF, toDNF
   )
 where
@@ -123,27 +122,6 @@ recurse op b1 b2 a1 c1 d1 a2 c2 d2
         | a1 == a2 = Split a1 (op c1 c2) (op d1 d2)
         | a1 < a2 = Split a1 (op c1 b2) (op d1 b2)
         | otherwise = Split a2 (op b1 c2) (op b1 d2)
-
--- | Returns a DNF formula from a Bdd
---
--- The outer list represents a union, and each element is the intersection of
--- its sub-elements, where the first component is the list of positive atoms
--- and the second the list of negative atoms.
--- For example, @[ ([x], []), ([y], [z, q]) ]@ represents the formula
---
--- > x \/ (y /\ (not z) /\ (not q))
-get :: T a -> [([a], [a])]
-get a = get_aux a [] [] []
-
-    where
-    get_aux t accu pos neg =
-      case t of
-        (Leaf True) -> (pos, neg):accu
-        (Leaf False) -> accu
-        (Split x p n) ->
-          let accu' = get_aux p accu (x:pos) neg
-          in
-          get_aux n accu' pos (x:neg)
 
 -- | Disjunctive normal form
 -- Alternative representation for boolean formulas, sometime easier to use
