@@ -21,6 +21,8 @@ where
 
 import Types.SetTheoretic
 
+import qualified Data.Set as Set
+
 -- | A Binary decision diagram
 data T a
     = Leaf Bool
@@ -149,17 +151,17 @@ get a = get_aux a [] [] []
 -- The outer list corresponds to a bid disjunction, and for each element of
 -- this list, the first element of the pair is a conjunction of atoms and the
 -- second a conjonction of negated atoms.
-type DNF a = [([a],[a])]
+type DNF a = Set.Set (Set.Set a,Set.Set a)
 
-toDNF :: T a -> DNF a
-toDNF = aux [] [] []
+toDNF :: Ord a => T a -> DNF a
+toDNF = aux Set.empty Set.empty Set.empty
   where
-    aux :: DNF a -> [a] -> [a] -> T a -> DNF a
+    aux :: Ord a => DNF a -> Set.Set a -> Set.Set a -> T a -> DNF a
     aux accu pos neg = \case
-      Leaf True -> (pos, neg) : accu
+      Leaf True -> Set.insert (pos, neg) accu
       Leaf False -> accu
       Split { tif, tthen, telse } ->
-        let accuR = aux accu (tif : pos) neg tthen
-            accuRL = aux accuR pos (tif : neg) telse
+        let accuR = aux accu (Set.insert tif pos) neg tthen
+            accuRL = aux accuR pos (Set.insert tif neg) telse
         in
         accuRL
