@@ -15,12 +15,12 @@ import qualified Control.Monad.Writer as W
 
 parse :: Env.T ->  Annot.T -> W.Writer [Error.T] Types.T
 parse env annot = case WL.descr annot of
-  Annot.Ident name -> case Env.getType env $ name of
+  Annot.Ident name -> case Env.getType env name of
     Nothing -> W.writer (Types.undef, [Error.T (WL.loc annot) "Undefined type"])
     Just t -> pure t
-  Annot.Arrow domain codomain -> do
-    domain <- parse env domain
-    codomain <- parse env codomain
+  Annot.Arrow rawDomain rawCodomain -> do
+    domain <- parse env rawDomain
+    codomain <- parse env rawCodomain
     pure $ Types.arrow $ Arrow.T $ Bdd.atom $ Arrow.Arrow domain codomain
   Annot.Or ann1 ann2 -> boolComb cup ann1 ann2
   Annot.And ann1 ann2 -> boolComb cap ann1 ann2

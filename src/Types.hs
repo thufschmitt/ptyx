@@ -8,7 +8,7 @@ Description: Tix used by Tix
 module Types (T, arrows, ints, arrow, int, undef) where
 
 
-import Prelude hiding (any)
+import Prelude
 import Data.List (intercalate)
 import Types.SetTheoretic
 import qualified Types.Arrow as Arrow
