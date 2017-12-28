@@ -54,12 +54,11 @@ isEmptyA (T a)
   | Bdd.isTriviallyFull a = False
   | otherwise =
     let arrow = Bdd.toDNF a in
-    anySet emptyIntersect arrow
+    all emptyIntersect arrow
 
     where
-      anySet prop = Set.foldl (\accu elt -> accu && prop elt) True
       emptyIntersect (pos, neg) =
-        anySet (sub' pos) neg
+        any (sub' pos) neg
 
       sub' p (Arrow t1 t2) =
         subCupDomains t1 p &&
@@ -74,20 +73,11 @@ isEmptyA (T a)
       superCapCodomains t p =
         capN (Set.map codomain p) <: t
 
-      forallStrictSubset f elts = forallStrictSubset' f elts Set.empty
-
-      forallStrictSubset' f elts removedElts
-        | Set.null elts = True
-        | otherwise =
-          let
-            directsubsets =
-                          [ (Set.delete x elts, Set.insert x removedElts)
-                          | x <- Set.toList elts ]
-          in
-          all (\(subset, compl) ->
-               f subset compl
-               && forallStrictSubset' f subset compl)
-              directsubsets
+      forallStrictSubset f =
+        foldStrictSubsets
+          True
+          (\accu elt compl -> accu && f elt compl)
+          Set.empty
 
 instance SetTheoretic t => SetTheoretic (T t) where
   isEmpty = isEmptyA
@@ -106,25 +96,28 @@ getApplication arr s =
       if s <: cupN (Set.map domain subset)
       then acc
       else acc `cup` capN (Set.map codomain compl)
-    foldStrictSubsets ::
-      Ord a => b -> (b -> Set.Set a -> Set.Set a -> b)
-            -> Set.Set a -> Set.Set a-> b
-    foldStrictSubsets foldInit f elts removedElts
-      | Set.null elts = foldInit
-      | otherwise =
-        let
-          directsubsets =
-                        [ (Set.delete x elts, Set.insert x removedElts)
-                        | x <- Set.toList elts ]
-        in
-        foldl
-          (\accu (subset, compl) ->
-            f
-              (foldStrictSubsets accu f subset compl)
-              subset
-              compl)
-          foldInit
-          directsubsets
+
+foldStrictSubsets ::
+     Ord a
+  => b
+  -> (b -> Set.Set a -> Set.Set a -> b)
+  -> Set.Set a
+  -> Set.Set a
+  -> b
+foldStrictSubsets foldInit f elts removedElts =
+    let
+      directsubsets =
+                    [ (Set.delete x elts, Set.insert x removedElts)
+                    | x <- Set.toList elts ]
+    in
+    foldl
+      (\accu (subset, compl) ->
+        f
+          (foldStrictSubsets accu f subset compl)
+          subset
+          compl)
+      foldInit
+      directsubsets
 
 -- | Get the domain of a composed arrow
 compDomain :: forall t. SetTheoretic t => Bdd.DNF (Arrow t) -> t
