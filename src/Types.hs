@@ -27,7 +27,7 @@ data T = T {
 instance Show T where
   show t@T{arrows, ints}
     | isEmpty t = "⊥"
-    | isFull t = "TOP"
+    | isFull t = "⊤"
     | otherwise = intercalate " | " $ filter (not . (==) "⊥") [show arrows, show ints]
 
 map2 :: (Arrow.T T -> Arrow.T T -> Arrow.T T)
