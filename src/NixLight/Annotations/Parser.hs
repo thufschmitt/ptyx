@@ -15,8 +15,6 @@ import qualified Data.Text as T
 import           Nix.Expr (SrcSpan(..))
 import           Control.Applicative ((<|>))
 
-import           Data.Map.Strict (Map)
-
 -- Stolen form hnix as it is unexported there
 annotateLocation :: Tf.Parser a -> Tf.Parser (WL.T a)
 annotateLocation p = do
@@ -56,9 +54,10 @@ ops = [
   where
     binary :: String -> Tf.Parser (Annot.T -> Annot.T -> Annot.T) -> Assoc -> Operator Tf.Parser Annot.T
     binary  name fun = Infix (fun <* Tok.symbol name)
-    prefix  name fun = Prefix (fun <* Tok.symbol name)
-    postfix name fun = Postfix (fun <* Tok.symbol name)
+    -- prefix  name fun = Prefix (fun <* Tok.symbol name)
+    -- postfix name fun = Postfix (fun <* Tok.symbol name)
 
+atom :: Tf.Parser Annot.T
 atom = Tok.parens typ <|> baseType <?> "simple type"
 
 typeAnnot :: Delta -> T.Text -> Tf.Result Annot.T

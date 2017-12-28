@@ -1,10 +1,7 @@
 -- | A simplified version of Nix Ast
 module NixLight.Ast where
 
-import Data.Fix
 import Data.Text (Text)
-import Text.Show.Deriving
-import qualified Data.Map.Strict as Map
 import           Data.Map.Strict (Map)
 import qualified NixLight.WithLoc as WL
 import qualified NixLight.Annotations as Annot

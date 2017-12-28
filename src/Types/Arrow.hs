@@ -19,7 +19,6 @@ import Types.SetTheoretic
 
 import qualified Types.Bdd as Bdd
 
-import Data.Monoid ((<>))
 import qualified Data.Set as Set
 
 -- | Atomic arrow type
@@ -57,8 +56,8 @@ isEmptyA (T a)
     all emptyIntersect arrow
 
     where
-      emptyIntersect (pos, neg) =
-        any (sub' pos) neg
+      emptyIntersect (posAtom, negAtom) =
+        any (sub' posAtom) negAtom
 
       sub' p (Arrow t1 t2) =
         subCupDomains t1 p &&

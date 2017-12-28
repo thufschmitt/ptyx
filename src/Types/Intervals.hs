@@ -39,9 +39,9 @@ data Elt = Elt Bound Bound deriving (Eq, Ord)
 
 instance Show Elt where
   show (Elt NegInfinity PosInfinity) = "Int"
-  show (Elt min max)
-    | min == max = show min
-    | otherwise  = show min ++ " -- " ++ show max
+  show (Elt minElt maxElt)
+    | minElt == maxElt = show minElt
+    | otherwise  = show minElt ++ " -- " ++ show maxElt
 
 -- | The type of intervals
 newtype T = Intervals [Elt] deriving (Eq, Ord)

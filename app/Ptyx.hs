@@ -1,6 +1,5 @@
 {-# LANGUAGE LambdaCase #-}
 import Nix.Parser
-import Nix.Pretty
 import Nix.Expr
 
 import qualified NixLight.FromHNix
@@ -11,8 +10,6 @@ import Typer.Environ ()
 
 import Data.Default (def)
 import System.Environment
-import System.IO
-import Text.PrettyPrint.ANSI.Leijen
 import qualified Control.Monad.Writer as W
 
 nix :: FilePath -> IO ()

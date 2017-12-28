@@ -3,10 +3,9 @@
 
 module NixLight.FromHNix where
 
-import Data.Fix (cata, Fix(..))
+import Data.Fix (cata)
 import Data.Functor.Compose
 import qualified Data.Map.Strict as Map
-import           Data.Map.Strict (Map)
 import qualified Data.Text as T
 import qualified NixLight.Ast as NL
 import qualified NixLight.WithLoc as WL
@@ -26,13 +25,13 @@ expr = cata phi where
             (NAbs param body) -> NL.Eabs (pat param) body
             (NApp e1 e2) -> NL.Eapp e1 e2
             (NSym x) -> NL.Evar x
-            (NAnnot e (Annotation ':' annot)) ->
+            (NAnnot e' (Annotation ':' annot)) ->
               case AnnotParser.typeAnnot (spanBegin loc) annot of
                 Tri.Success type_annot ->
-                  NL.Eannot type_annot e
+                  NL.Eannot type_annot e'
                 Tri.Failure f -> error $ show f
-            NLet binds e ->
-              NL.EBinding (bindings binds) e
+            NLet binds e' ->
+              NL.EBinding (bindings binds) e'
             _ -> undefined -- TODO
     in
     WL.T loc descr
@@ -51,7 +50,7 @@ pat _ = undefined -- TODO
 
 parseTypeAnnot :: TD.Delta -> T.Text -> Annot.T
 parseTypeAnnot loc annot =
-  case AnnotParser.typeAnnot (TD.Directed "<annot>" 0 0 0 0) annot of
+  case AnnotParser.typeAnnot loc annot of
     Tri.Success type_annot -> type_annot
     Tri.Failure f -> error $ show f
 
@@ -78,9 +77,9 @@ bindings =
       DynamicKey _ -> error "Dynamic keys are not allowed"
       StaticKey name -> addIfAbsent name NL.Inherit accu
 
-    addQualifiedInherit baseExpr accu = \case
+    addQualifiedInherit _baseExpr _accu = \case
       DynamicKey _ -> error "Dynamic keys are not allowed"
-      StaticKey name -> error "Field access not implemented yet"
+      StaticKey _name -> error "Field access not implemented yet"
 
     addNamedVar [StaticKey name] annot rhs =
       addIfAbsent name (NL.NamedVar annot rhs)

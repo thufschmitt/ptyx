@@ -36,13 +36,14 @@ instance Show a => Show (T a) where
       showDNF $ toListDNF x
       where
         showDNF = foldl (\acc elt -> showConj elt ++ " | " ++ acc) "⊥"
-        showConj (pos, neg) = parens $ showConjPos pos ++ " & " ++ showConjNeg neg
+        showConj (posAtoms, negAtoms) =
+          parens $ showConjPos posAtoms ++ " & " ++ showConjNeg negAtoms
         showConjPosNeg discr = foldl
           (\acc elt -> discr ++ show elt ++ " & " ++ acc)
           "⊤"
         showConjPos = showConjPosNeg ""
         showConjNeg = showConjPosNeg "¬"
-        parens x = "(" ++ x ++ ")"
+        parens elt = "(" ++ elt ++ ")"
 
 -- | @atom x@ Returns the Bdd containing only the atom @x@
 atom :: a -> T a
@@ -135,12 +136,12 @@ toDNF :: Ord a => T a -> DNF a
 toDNF = aux Set.empty Set.empty Set.empty
   where
     aux :: Ord a => DNF a -> Set.Set a -> Set.Set a -> T a -> DNF a
-    aux accu pos neg = \case
-      Leaf True -> Set.insert (pos, neg) accu
+    aux accu posAtoms negAtoms = \case
+      Leaf True -> Set.insert (posAtoms, negAtoms) accu
       Leaf False -> accu
       Split { tif, tthen, telse } ->
-        let accuR = aux accu (Set.insert tif pos) neg tthen
-            accuRL = aux accuR pos (Set.insert tif neg) telse
+        let accuR = aux accu (Set.insert tif posAtoms) negAtoms tthen
+            accuRL = aux accuR posAtoms (Set.insert tif negAtoms) telse
         in
         accuRL
 
@@ -148,11 +149,11 @@ toListDNF :: T a -> [([a],[a])]
 toListDNF = aux [] [] []
   where
     aux :: [([a],[a])] -> [a] -> [a] -> T a ->  [([a],[a])]
-    aux accu pos neg = \case
-      Leaf True -> (pos, neg) : accu
+    aux accu posAtom negAtom = \case
+      Leaf True -> (posAtom, negAtom) : accu
       Leaf False -> accu
       Split { tif, tthen, telse } ->
-        let accuR = aux accu (tif : pos) neg tthen
-            accuRL = aux accuR pos (tif : neg) telse
+        let accuR = aux accu (tif : posAtom) negAtom tthen
+            accuRL = aux accuR posAtom (tif : negAtom) telse
         in
         accuRL
