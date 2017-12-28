@@ -25,13 +25,10 @@ data T = T {
            deriving (Eq, Ord)
 
 instance Show T where
-  show T{arrows, ints} =
-    let display =
-          intercalate " | " $ filter (not . (==) "⊥") [show arrows, show ints]
-    in
-    if display == ""
-    then "⊥"
-    else display
+  show t@T{arrows, ints}
+    | isEmpty t = "⊥"
+    | isFull t = "TOP"
+    | otherwise = intercalate " | " $ filter (not . (==) "⊥") [show arrows, show ints]
 
 map2 :: (Arrow.T T -> Arrow.T T -> Arrow.T T)
        -> (Intervals.T -> Intervals.T -> Intervals.T)

@@ -52,3 +52,6 @@ class SetTheoretic_ a => SetTheoretic a where
   sub x1 x2 = isEmpty $ diff x1 x2
   (<:) = sub
   isEmpty x = sub x empty
+
+isFull :: SetTheoretic a => a -> Bool
+isFull x = isEmpty (full \\ x)

@@ -33,16 +33,16 @@ instance Show a => Show (T a) where
     | isTriviallyEmpty x = "⊥"
     | isTriviallyFull  x = "⊤"
     | otherwise          =
-      foldBdd FoldParam{
-        fpEmpty = "⊥",
-        fpFull = "⊤",
-        fpAtom = show,
-        fpCup = \x y -> parens x ++ " | " ++ parens y,
-        fpCap = \x y -> parens x ++ " & " ++ parens y,
-        fpDiff = \x y -> parens x ++ " \\ " ++ parens y
-      }
-      x
-    where parens x = "(" ++ x ++ ")"
+      showDNF $ toListDNF x
+      where
+        showDNF = foldl (\acc elt -> showConj elt ++ " | " ++ acc) "⊥"
+        showConj (pos, neg) = parens $ showConjPos pos ++ " & " ++ showConjNeg neg
+        showConjPosNeg discr = foldl
+          (\acc elt -> discr ++ show elt ++ " & " ++ acc)
+          "⊤"
+        showConjPos = showConjPosNeg ""
+        showConjNeg = showConjPosNeg "¬"
+        parens x = "(" ++ x ++ ")"
 
 -- | @atom x@ Returns the Bdd containing only the atom @x@
 atom :: a -> T a
@@ -141,5 +141,18 @@ toDNF = aux Set.empty Set.empty Set.empty
       Split { tif, tthen, telse } ->
         let accuR = aux accu (Set.insert tif pos) neg tthen
             accuRL = aux accuR pos (Set.insert tif neg) telse
+        in
+        accuRL
+
+toListDNF :: T a -> [([a],[a])]
+toListDNF = aux [] [] []
+  where
+    aux :: [([a],[a])] -> [a] -> [a] -> T a ->  [([a],[a])]
+    aux accu pos neg = \case
+      Leaf True -> (pos, neg) : accu
+      Leaf False -> accu
+      Split { tif, tthen, telse } ->
+        let accuR = aux accu (tif : pos) neg tthen
+            accuRL = aux accuR pos (tif : neg) telse
         in
         accuRL
