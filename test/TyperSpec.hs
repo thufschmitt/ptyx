@@ -94,6 +94,11 @@ spec = do
       "undefined" `isInferredAs` empty
     it "type-annot" $
       "1 /*: Int */" `isInferredAs` Types.int full
+    describe "let-bindings" $ do
+      it "trivial" $
+        "let x = 1; in x" `isInferredAs` Singleton.int 1
+      it "trivial annotated" $
+        "let x /*: Int */ = 1; in x" `isInferredAs` Types.int full
 
   describe "Check only" $
     describe "Application" $
