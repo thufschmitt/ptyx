@@ -102,6 +102,8 @@ spec = do
         "let x = 1; in x" `isInferredAs` Singleton.int 1
       it "trivial annotated" $
         "let x /*: Int */ = 1; in x" `isInferredAs` Types.int full
+      it "multiple" $
+        "let x /*: Int */ = 1; y = x; in y" `isInferredAs` Types.int full
 
   describe "Check only" $
     describe "Application" $
