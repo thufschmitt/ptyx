@@ -47,7 +47,7 @@ subB _ Full = True
 subB Empty _ = True
 subB _ Empty = False
 subB Full _ = False
-subB _ _ = False
+subB x y = x == y
 
 instance SetTheoretic_ T where
   empty = Empty
