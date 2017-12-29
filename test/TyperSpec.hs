@@ -89,6 +89,13 @@ spec = do
       it "higher order" $
         "(x /*: Int -> Int */: x 1) (x /*: Int */: x)"
           `inferredAndChecks` Types.int full
+    describe "let-bindings" $ do
+      it "trivial" $
+        "let x = 1; in x" `inferredAndChecks` Singleton.int 1
+      it "trivial annotated" $
+        "let x /*: Int */ = 1; in x" `inferredAndChecks` Types.int full
+      it "multiple" $
+        "let x /*: Int */ = 1; y = x; in y" `inferredAndChecks` Types.int full
 
   describe "Inference only" $ do
     it "wrong" $
@@ -97,13 +104,6 @@ spec = do
       "undefined" `isInferredAs` empty
     it "type-annot" $
       "1 /*: Int */" `isInferredAs` Types.int full
-    describe "let-bindings" $ do
-      it "trivial" $
-        "let x = 1; in x" `isInferredAs` Singleton.int 1
-      it "trivial annotated" $
-        "let x /*: Int */ = 1; in x" `isInferredAs` Types.int full
-      it "multiple" $
-        "let x /*: Int */ = 1; y = x; in y" `isInferredAs` Types.int full
 
   describe "Check only" $
     describe "Application" $

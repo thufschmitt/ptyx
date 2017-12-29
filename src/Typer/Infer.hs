@@ -4,16 +4,13 @@
 
 module Typer.Infer where
 
-import Data.Functor.Compose
 
-import Data.Fix (Fix(Fix), cata)
 import Data.Maybe (fromMaybe)
 import qualified Data.Map as Map
 import           Data.Monoid ((<>))
 import qualified Data.Text as T
 import qualified NixLight.Ast as NL
 import qualified NixLight.WithLoc as WL
-import qualified NixLight.Annotations as Annot
 import qualified Typer.Environ as Env
 import qualified Typer.Error as Error
 import qualified Types
@@ -89,18 +86,20 @@ checkExpr env expected (WL.T loc descr) =
       NL.Eapp fun arg -> do
         argType <- inferExpr env arg
         checkExpr env (Types.arrow $ Arrow.atom argType expected) fun
-      _ -> W.tell [Error.T loc "Not implemented"]
+      NL.EBinding binds body -> do
+        updatedEnv <- bindings env binds
+        checkExpr updatedEnv expected body
 
 bindings :: Env.T -> NL.Bindings -> WithError Env.T
-bindings env binds =
-  let initialEnv = getInitialEnv (pure env) binds in
+bindings externalEnv binds =
+  let initialEnv = getInitialEnv (pure externalEnv) binds in
   getFinalEnv initialEnv binds
 
   where
     getInitialEnv =
       Map.foldlWithKey (\accuEnv varName -> \case
         NL.Inherit -> accuEnv
-        NL.NamedVar { NL.annot, NL.rhs } -> do
+        NL.NamedVar { NL.annot, NL.rhs = _ } -> do
           env <- accuEnv
           annotType <- case annot of
             Nothing -> pure Types.undef
@@ -111,7 +110,7 @@ bindings env binds =
         NL.Inherit -> accuEnv
         NL.NamedVar { NL.annot, NL.rhs } -> do
           typingEnv <- initialEnv
-          accuEnv <- accuEnv
+          env <- accuEnv
           rhsType <-
             case annot of
               Nothing -> inferExpr typingEnv rhs
@@ -119,7 +118,7 @@ bindings env binds =
                 annotType <- Types.FromAnnot.parse typingEnv t
                 checkExpr typingEnv annotType rhs
                 pure annotType
-          pure $ Env.addVariable varName rhsType accuEnv)
+          pure $ Env.addVariable varName rhsType env)
       initialEnv
 
 
