@@ -32,6 +32,7 @@ expr = cata phi where
                 Tri.Failure f -> error $ show f
             NLet binds e' ->
               NL.EBinding (bindings binds) e'
+            NIf e1 e2 e3 -> NL.EIfThenElse e1 e2 e3
             _ -> undefined -- TODO
     in
     WL.T loc descr

@@ -58,6 +58,7 @@ inferExpr env (WL.T loc descr) =
       NL.EBinding binds body -> do
         updatedEnv <- bindings env binds
         inferExpr updatedEnv body
+      NL.EIfThenElse _ _ _ -> undefined
 
 inferConstant :: NL.Constant -> Types.T
 inferConstant (NL.Cint i) = S.int i
@@ -90,6 +91,7 @@ checkExpr env expected (WL.T loc descr) =
       NL.EBinding binds body -> do
         updatedEnv <- bindings env binds
         checkExpr updatedEnv expected body
+      NL.EIfThenElse _ _ _ -> undefined
 
 bindings :: Env.T -> NL.Bindings -> WithError Env.T
 bindings externalEnv binds =

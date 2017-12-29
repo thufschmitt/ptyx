@@ -13,6 +13,7 @@ data NoLocExpr
   | Eapp !ExprLoc !ExprLoc
   | Eannot !Annot.T !ExprLoc
   | EBinding !Bindings !ExprLoc
+  | EIfThenElse { eif, ethen, eelse :: !ExprLoc }
   deriving (Ord, Eq, Show)
 
 type ExprLoc = WL.T NoLocExpr
