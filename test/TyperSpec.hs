@@ -10,7 +10,6 @@ import qualified Typer.Error
 import qualified Types.Singletons as Singleton
 import Types.SetTheoretic
 import qualified Types
-import qualified Types.Bdd as Bdd
 import qualified Types.Arrow as Arrow
 
 import Data.Function ((&))
@@ -42,12 +41,16 @@ inferredAndChecks prog typ = do
   isInferredAs prog typ
   checksAgain prog typ
 
+shouldFail :: Show a
+           => NParser.Result (W.Writer [Typer.Error.T] a)
+           -> b
+           -> Expectation
 shouldFail (NParser.Failure f) _ = expectationFailure (show f)
-shouldFail (NParser.Success res) y =
+shouldFail (NParser.Success res) _y =
   case W.runWriter res of
     (x, []) -> expectationFailure
                  $ "Expected an error, but got type " ++ show x
-    (_, errs) -> pure ()
+    (_, _) -> pure ()
 
 typeString :: String -> NParser.Result (W.Writer [Typer.Error.T] Types.T)
 typeString s = Infer.inferExpr def <$> parseString s
