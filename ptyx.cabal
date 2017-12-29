@@ -17,6 +17,7 @@ library
   hs-source-dirs:      src
   exposed-modules:     Types.Bdd
                        , Types.Arrow
+                       , Types.Bool
                        , Types.Intervals
                        , Types
                        , Types.FromAnnot
