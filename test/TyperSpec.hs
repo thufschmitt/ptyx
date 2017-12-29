@@ -65,6 +65,10 @@ spec = do
       "1" `inferredAndChecks` Singleton.int 1
     it "Annotated constant" $
       "2 /*: Int */" `inferredAndChecks` Types.int full
+    it "True constant" $
+      "true" `inferredAndChecks` Singleton.bool True
+    it "False constant" $
+      "false" `inferredAndChecks` Singleton.bool False
     describe "Lambdas" $ do
       it "trivial" $
         "x: 1" `inferredAndChecks`

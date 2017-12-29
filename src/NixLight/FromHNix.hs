@@ -38,6 +38,7 @@ expr = cata phi where
 
 constant :: NAtom -> NL.Constant
 constant (NInt i) = NL.Cint i
+constant (NBool b) = NL.Cbool b
 constant _ = undefined -- TODO
 
 pat :: Params NL.ExprLoc -> NL.Pattern

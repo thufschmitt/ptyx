@@ -17,8 +17,9 @@ data NoLocExpr
 
 type ExprLoc = WL.T NoLocExpr
 
-newtype Constant
+data Constant
   = Cint Integer
+  | Cbool Bool
   -- TODO: complete
   deriving (Ord, Eq, Show)
 

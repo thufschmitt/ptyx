@@ -61,6 +61,7 @@ inferExpr env (WL.T loc descr) =
 
 inferConstant :: NL.Constant -> Types.T
 inferConstant (NL.Cint i) = S.int i
+inferConstant (NL.Cbool b) = S.bool b
 
 checkExpr :: Env.T -> Types.T -> NL.ExprLoc -> WithError ()
 checkExpr env expected (WL.T loc descr) =

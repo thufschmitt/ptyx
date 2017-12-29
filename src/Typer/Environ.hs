@@ -27,6 +27,7 @@ getType :: T -> Text -> Maybe Types.T
 getType _ name = -- FIXME: using hardcoded list of builtin types for now
   case name of
     "Int" -> pure $ Types.int full
+    "Bool" -> pure $ Types.bool full
     "Any" -> pure full
     "Empty" -> pure empty
     _ -> Nothing
