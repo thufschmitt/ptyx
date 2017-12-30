@@ -55,6 +55,7 @@ instance SetTheoretic_ T where
   cup = cupB
   cap = capB
   neg = negB
+  diff x y = x \\ neg y
 
 instance SetTheoretic T where
   isEmpty = (==) Empty

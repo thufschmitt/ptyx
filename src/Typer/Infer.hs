@@ -8,6 +8,7 @@ module Typer.Infer where
 import Data.Maybe (fromMaybe)
 import qualified Data.Map as Map
 import           Data.Monoid ((<>))
+import qualified Data.Set as Set
 import qualified Data.Text as T
 import qualified NixLight.Ast as NL
 import qualified NixLight.WithLoc as WL
@@ -59,16 +60,7 @@ inferExpr env (WL.T loc descr) =
         updatedEnv <- bindings env binds
         inferExpr updatedEnv body
       NL.EIfThenElse { NL.eif, NL.ethen, NL.eelse } -> do
-        -- TODO add special case for typecase
-        ifType <- inferExpr env eif
-        checkSubtype loc ifType (Types.bool full)
-        tthen <- if ifType <: S.bool False
-                 then pure empty
-                 else inferExpr env ethen
-        telse <- if ifType <: S.bool True
-                 then pure empty
-                 else inferExpr env eelse
-        pure $ tthen \/ telse
+        inferIfThenElse env loc eif ethen eelse
 
 inferConstant :: NL.Constant -> Types.T
 inferConstant (NL.Cint i) = S.int i
@@ -142,6 +134,56 @@ bindings externalEnv binds =
                 pure annotType
           pure $ Env.addVariable varName rhsType env)
       initialEnv
+
+inferIfThenElse :: Env.T
+                -> WL.Loc
+                -> NL.ExprLoc -- if
+                -> NL.ExprLoc -- then
+                -> NL.ExprLoc -- else
+                -> WithError Types.T
+inferIfThenElse env loc eif ethen eelse =
+  case WL.descr eif of
+    NL.Eapp ifFunction (arg@WL.T { WL.descr = NL.Evar v }) -> do
+      ifFunctionType <- inferExpr env ifFunction
+      case getDiscriminer ifFunctionType of
+        Just discr -> do
+          vType <- inferExpr env arg
+          thenType <- typeWithExfalso v (vType /\ discr) ethen
+          elseType <- typeWithExfalso v (vType /\ neg discr) eelse
+          pure $ thenType \/ elseType
+        Nothing -> defaultType
+    _ -> defaultType
+  where
+    typeWithExfalso var typ e =
+      if typ <: empty
+      then pure empty
+      else inferExpr (Env.addVariable var typ env) e
+    defaultType = do
+      ifType <- inferExpr env eif
+      checkSubtype loc ifType (Types.bool full)
+      tthen <- if ifType <: S.bool False
+                then pure empty
+                else inferExpr env ethen
+      telse <- if ifType <: S.bool True
+                then pure empty
+                else inferExpr env eelse
+      pure $ tthen \/ telse
+    getDiscriminer typ | typ <: Types.arrow full =
+      let arrows = (Arrow.get $ Types.arrows typ) in
+      case (fmap (\(x,y) -> (Set.toList x, Set.toList y)) $
+                  Set.toList arrows) of
+        [([Arrow.Arrow t1 b1, Arrow.Arrow t2 b2], [])] ->
+          if b1 ~: S.bool True
+            && b2 ~: S.bool False
+            && t1 ~: (neg t2)
+          then Just t1
+          else if b1 ~: S.bool False
+               && b2 ~: S.bool True
+               && t1 ~: (neg t2)
+          then Just t2
+          else Nothing
+        _ -> Nothing
+    getDiscriminer _ = Nothing
 
 
 updateEnv :: WL.Loc

@@ -31,7 +31,7 @@ class Ord a => SetTheoretic_ a where
   (\\) = diff
 
   neg = diff full
-  diff x y = x \\ neg y
+  -- diff x y = x \\ neg y
 
 -- | N-ary versions of the set-theoretic operators
 cupN :: (SetTheoretic a, Foldable t) => t a -> a
@@ -51,7 +51,10 @@ class SetTheoretic_ a => SetTheoretic a where
 
   sub x1 x2 = isEmpty $ diff x1 x2
   (<:) = sub
-  isEmpty x = sub x empty
+  -- isEmpty x = sub x empty
 
 isFull :: SetTheoretic a => a -> Bool
 isFull x = isEmpty (full \\ x)
+
+(~:) :: SetTheoretic a => a -> a -> Bool
+a ~: b = a <: b && b <: a

@@ -65,6 +65,7 @@ instance SetTheoretic_ T where
   diff = map2 diff
 
 instance SetTheoretic T where
+  isEmpty x = sub x empty
   sub t1 t2 =
     sub (arrows t1) (arrows t2) &&
     sub (ints t1) (ints t2) &&
