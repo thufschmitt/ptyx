@@ -58,7 +58,17 @@ inferExpr env (WL.T loc descr) =
       NL.EBinding binds body -> do
         updatedEnv <- bindings env binds
         inferExpr updatedEnv body
-      NL.EIfThenElse _ _ _ -> undefined
+      NL.EIfThenElse { NL.eif, NL.ethen, NL.eelse } -> do
+        -- TODO add special case for typecase
+        ifType <- inferExpr env eif
+        checkSubtype loc ifType (Types.bool full)
+        tthen <- if ifType <: S.bool False
+                 then pure empty
+                 else inferExpr env ethen
+        telse <- if ifType <: S.bool True
+                 then pure empty
+                 else inferExpr env eelse
+        pure $ tthen \/ telse
 
 inferConstant :: NL.Constant -> Types.T
 inferConstant (NL.Cint i) = S.int i

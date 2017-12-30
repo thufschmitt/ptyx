@@ -108,6 +108,14 @@ spec = do
       "undefined" `isInferredAs` empty
     it "type-annot" $
       "1 /*: Int */" `isInferredAs` Types.int full
+    describe "If-then-else" $ do
+      it "Always true" $
+        "if true then 1 else 2" `isInferredAs` Singleton.int 1
+      it "Always false" $
+        "if false then 1 else 2" `isInferredAs` Singleton.int 2
+      it "Undecided" $
+        "let x /*: Bool */ = true; in if x then 1 else 3"
+          `isInferredAs` (Singleton.int 1 \/ Singleton.int 3)
 
   describe "Check only" $
     describe "Application" $
