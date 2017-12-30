@@ -101,7 +101,16 @@ checkExpr env expected (WL.T loc descr) =
       NL.EBinding binds body -> do
         updatedEnv <- bindings env binds
         checkExpr updatedEnv expected body
-      NL.EIfThenElse _ _ _ -> undefined
+      NL.EIfThenElse { NL.eif, NL.ethen, NL.eelse } -> do
+        -- TODO add special case for typecase
+        ifType <- inferExpr env eif
+        checkSubtype loc ifType (Types.bool full)
+        if ifType <: S.bool False
+          then pure ()
+          else checkExpr env expected ethen
+        if ifType <: S.bool True
+          then pure ()
+          else checkExpr env expected eelse
 
 bindings :: Env.T -> NL.Bindings -> WithError Env.T
 bindings externalEnv binds =
