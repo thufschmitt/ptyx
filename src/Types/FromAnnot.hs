@@ -2,7 +2,7 @@
 
 module Types.FromAnnot where
 
-import qualified NixLight.Annotations as Annot
+import qualified NixLight.Ast as Ast
 import qualified NixLight.WithLoc as WL
 import qualified Typer.Environ as Env
 import qualified Typer.Error as Error
@@ -13,18 +13,18 @@ import           Types.SetTheoretic
 
 import qualified Control.Monad.Writer as W
 
-parse :: Env.T ->  Annot.T -> W.Writer [Error.T] Types.T
+parse :: Env.T ->  Ast.AnnotLoc -> W.Writer [Error.T] Types.T
 parse env annot = case WL.descr annot of
-  Annot.Ident name -> case Env.getType env name of
+  Ast.Aident name -> case Env.getType env name of
     Nothing -> W.writer (Types.undef, [Error.T (WL.loc annot) "Undefined type"])
     Just t -> pure t
-  Annot.Arrow rawDomain rawCodomain -> do
+  Ast.Aarrow rawDomain rawCodomain -> do
     domain <- parse env rawDomain
     codomain <- parse env rawCodomain
     pure $ Types.arrow $ Arrow.T $ Bdd.atom $ Arrow.Arrow domain codomain
-  Annot.Or ann1 ann2 -> boolComb cup ann1 ann2
-  Annot.And ann1 ann2 -> boolComb cap ann1 ann2
-  Annot.Diff ann1 ann2 -> boolComb diff ann1 ann2
+  Ast.Aor ann1 ann2 -> boolComb cup ann1 ann2
+  Ast.Aand ann1 ann2 -> boolComb cap ann1 ann2
+  Ast.Adiff ann1 ann2 -> boolComb diff ann1 ann2
   where
     boolComb op ann1 ann2 = do
       t1 <- parse env ann1

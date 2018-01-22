@@ -48,11 +48,11 @@ data BindingDef
   deriving (Ord, Eq, Show)
 
 data Annot
-  = Ident !Text
-  | Arrow !AnnotLoc !AnnotLoc
-  | Or !AnnotLoc !AnnotLoc
-  | And !AnnotLoc !AnnotLoc
-  | Diff !AnnotLoc !AnnotLoc
+  = Aident !Text
+  | Aarrow !AnnotLoc !AnnotLoc
+  | Aor !AnnotLoc !AnnotLoc
+  | Aand !AnnotLoc !AnnotLoc
+  | Adiff !AnnotLoc !AnnotLoc
   deriving (Ord, Eq, Show)
 
 type AnnotLoc = WL.T Annot
