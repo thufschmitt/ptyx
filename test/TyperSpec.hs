@@ -55,6 +55,9 @@ shouldFail (NParser.Success res) _y =
 typeString :: String -> NParser.Result (W.Writer [Typer.Error.T] Types.T)
 typeString s = Infer.inferExpr def <$> parseString s
 
+checkString :: String -> Types.T -> NParser.Result (W.Writer [Typer.Error.T] ())
+checkString s typ = Infer.checkExpr def typ <$> parseString s
+
 parseString :: String -> NParser.Result Ast.ExprLoc
 parseString s = NixLight.FromHNix.expr <$> NParser.parseNixStringLoc s
 
@@ -108,14 +111,13 @@ spec = do
       it "Undecided" $
         "let x /*: Bool */ = true; in if x then 1 else 3"
           `inferredAndChecks` (Singleton.int 1 \/ Singleton.int 3)
-
-  describe "Inference only" $ do
-    it "wrong" $
+    it "wrong" $ do
       typeString "(x /*: Empty */: x) 1" & shouldFail
+      checkString "(x /*: Empty */: x) 1" (Types.int full) & shouldFail
     it "undef type" $
-      "undefined" `isInferredAs` empty
+      "undefined" `inferredAndChecks` empty
     it "type-annot" $
-      "1 /*: Int */" `isInferredAs` Types.int full
+      "1 /*: Int */" `inferredAndChecks` Types.int full
 
   describe "Check only" $
     describe "Application" $
