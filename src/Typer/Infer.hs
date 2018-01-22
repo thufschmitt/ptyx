@@ -197,8 +197,9 @@ updateEnv loc env previousAnnot pat = case pat of
     return (Env.addVariable varName xType env, xType)
   NL.Pannot annot sub_pat -> do
     annotatedType <- Types.FromAnnot.parse env annot
-    let virtualAnnot = fromMaybe full previousAnnot
-    updateEnv loc env (Just $ cap annotatedType virtualAnnot) sub_pat
+    let virtualAnnot = fromMaybe empty previousAnnot
+    checkSubtype loc virtualAnnot annotatedType
+    updateEnv loc env (Just annotatedType) sub_pat
 
 checkSubtype :: WL.Loc -> Types.T -> Types.T -> WithError ()
 checkSubtype loc t1 t2 =
