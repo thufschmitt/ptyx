@@ -10,6 +10,7 @@ import qualified Types
 import qualified Types.Bdd as Bdd
 import qualified Types.Arrow as Arrow
 import           Types.SetTheoretic
+import qualified Types.Singletons as Singleton
 
 import qualified Control.Monad.Writer as W
 
@@ -25,8 +26,13 @@ parse env annot = case WL.descr annot of
   Ast.Aor ann1 ann2 -> boolComb cup ann1 ann2
   Ast.Aand ann1 ann2 -> boolComb cap ann1 ann2
   Ast.Adiff ann1 ann2 -> boolComb diff ann1 ann2
+  Ast.Aconstant c -> pure $ constant c
   where
     boolComb op ann1 ann2 = do
       t1 <- parse env ann1
       t2 <- parse env ann2
       pure $ op t1 t2
+
+constant :: Ast.Constant -> Types.T
+constant (Ast.Cint i) = Singleton.int i
+constant (Ast.Cbool b) = Singleton.bool b

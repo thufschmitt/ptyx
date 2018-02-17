@@ -53,6 +53,7 @@ data Annot
   | Aor !AnnotLoc !AnnotLoc
   | Aand !AnnotLoc !AnnotLoc
   | Adiff !AnnotLoc !AnnotLoc
+  | Aconstant !Constant
   deriving (Ord, Eq, Show)
 
 type AnnotLoc = WL.T Annot

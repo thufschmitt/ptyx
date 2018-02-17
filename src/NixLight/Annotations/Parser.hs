@@ -8,12 +8,13 @@ import qualified NixLight.WithLoc as WL
 import qualified Text.Trifecta as Tf
 import           Text.Trifecta ((<?>))
 import           Text.Trifecta.Delta (Delta)
+import           Text.Parser.Combinators (try)
 import qualified Text.Parser.Token.Style as TStyle
 import qualified Text.Parser.Token as Tok
 import           Text.Parser.Expression as PExpr
 import qualified Data.Text as T
 import           Nix.Expr (SrcSpan(..))
-import           Control.Applicative ((<|>))
+import           Control.Applicative ((<|>), empty)
 
 -- Stolen form hnix as it is unexported there
 annotateLocation :: Tf.Parser a -> Tf.Parser (WL.T a)
@@ -40,6 +41,22 @@ baseType = do
   Tok.whiteSpace
   annotateLocation $ Ast.Aident <$> ident
 
+constant :: Tf.Parser Ast.AnnotLoc
+constant = do
+  Tok.whiteSpace
+  annotateLocation $ Ast.Aconstant <$> (intConstant <|> boolConstant)
+  where
+    intConstant, boolConstant :: Tf.Parser Ast.Constant
+    intConstant = Ast.Cint <$> Tok.integer
+    boolConstant = Ast.Cbool <$> boolTok
+    boolTok :: Tf.Parser Bool
+    boolTok = do
+      ident <- Tok.ident TStyle.emptyIdents
+      case ident of
+        "true" -> pure True
+        "false" -> pure False
+        _ -> empty
+
 typ :: Tf.Parser Ast.AnnotLoc
 typ = PExpr.buildExpressionParser ops atom
       <?> "type"
@@ -58,7 +75,7 @@ ops = [
     -- postfix name fun = Postfix (fun <* Tok.symbol name)
 
 atom :: Tf.Parser Ast.AnnotLoc
-atom = Tok.parens typ <|> baseType <?> "simple type"
+atom = Tok.parens typ <|> try constant <|> baseType <?> "simple type"
 
 typeAnnot :: Delta -> T.Text -> Tf.Result Ast.AnnotLoc
 typeAnnot delta = Tf.parseString (Tf.space *> typ) delta . T.unpack
