@@ -68,6 +68,10 @@ spec = do
       "1" `inferredAndChecks` Singleton.int 1
     it "Annotated constant" $
       "2 /*: Int */" `inferredAndChecks` Types.int full
+    it "Singleton int annot" $
+      "2 /*: 2 */" `inferredAndChecks` Singleton.int 2
+    it "Singleton bool annot" $
+      "true /*: true */" `inferredAndChecks` Singleton.bool True
     it "True constant" $
       "true" `inferredAndChecks` Singleton.bool True
     it "False constant" $

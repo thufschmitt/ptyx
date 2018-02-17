@@ -4,14 +4,13 @@ module NixLight.Ast where
 import Data.Text (Text)
 import           Data.Map.Strict (Map)
 import qualified NixLight.WithLoc as WL
-import qualified NixLight.Annotations as Annot
 
 data NoLocExpr
   = Econstant !Constant
   | Evar !Text
   | Eabs !Pattern !ExprLoc
   | Eapp !ExprLoc !ExprLoc
-  | Eannot !Annot.T !ExprLoc
+  | Eannot !AnnotLoc !ExprLoc
   | EBinding !Bindings !ExprLoc
   | EIfThenElse { eif, ethen, eelse :: !ExprLoc }
   deriving (Ord, Eq, Show)
@@ -26,7 +25,7 @@ data Constant
 
 data Pattern
   = Pvar !Text
-  | Pannot !Annot.T !Pattern
+  | Pannot !AnnotLoc !Pattern
   deriving (Ord, Eq, Show)
 
 type Bindings = Map Text BindingDef
@@ -42,8 +41,19 @@ type Bindings = Map Text BindingDef
 -- translated to n binding of the form @xi = r.xi@.
 data BindingDef
   = NamedVar {
-      annot :: Maybe Annot.T,
+      annot :: Maybe AnnotLoc,
       rhs :: ExprLoc
     }
   | Inherit
   deriving (Ord, Eq, Show)
+
+data Annot
+  = Aident !Text
+  | Aarrow !AnnotLoc !AnnotLoc
+  | Aor !AnnotLoc !AnnotLoc
+  | Aand !AnnotLoc !AnnotLoc
+  | Adiff !AnnotLoc !AnnotLoc
+  | Aconstant !Constant
+  deriving (Ord, Eq, Show)
+
+type AnnotLoc = WL.T Annot

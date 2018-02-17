@@ -10,7 +10,6 @@ import qualified Data.Text as T
 import qualified NixLight.Ast as NL
 import qualified NixLight.WithLoc as WL
 import qualified NixLight.Annotations.Parser as AnnotParser
-import qualified NixLight.Annotations as Annot
 import qualified Text.Trifecta.Delta as TD
 import qualified Text.Trifecta as Tri
 import Nix.Expr
@@ -50,7 +49,7 @@ pat (ParamAnnot p (Annotation ':' annot)) =
 pat (ParamAnnot p _) = pat p
 pat _ = undefined -- TODO
 
-parseTypeAnnot :: TD.Delta -> T.Text -> Annot.T
+parseTypeAnnot :: TD.Delta -> T.Text -> NL.AnnotLoc
 parseTypeAnnot loc annot =
   case AnnotParser.typeAnnot loc annot of
     Tri.Success type_annot -> type_annot

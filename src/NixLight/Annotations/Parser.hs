@@ -3,17 +3,18 @@ module NixLight.Annotations.Parser
   , typeAnnot
   ) where
 
-import qualified NixLight.Annotations as Annot
+import qualified NixLight.Ast as Ast
 import qualified NixLight.WithLoc as WL
 import qualified Text.Trifecta as Tf
 import           Text.Trifecta ((<?>))
 import           Text.Trifecta.Delta (Delta)
+import           Text.Parser.Combinators (try)
 import qualified Text.Parser.Token.Style as TStyle
 import qualified Text.Parser.Token as Tok
 import           Text.Parser.Expression as PExpr
 import qualified Data.Text as T
 import           Nix.Expr (SrcSpan(..))
-import           Control.Applicative ((<|>))
+import           Control.Applicative ((<|>), empty)
 
 -- Stolen form hnix as it is unexported there
 annotateLocation :: Tf.Parser a -> Tf.Parser (WL.T a)
@@ -35,30 +36,46 @@ annotateLocation3 p = do
 ident :: Tf.Parser T.Text
 ident = Tok.ident TStyle.emptyIdents
 
-baseType :: Tf.Parser Annot.T
+baseType :: Tf.Parser Ast.AnnotLoc
 baseType = do
   Tok.whiteSpace
-  annotateLocation $ Annot.Ident <$> ident
+  annotateLocation $ Ast.Aident <$> ident
 
-typ :: Tf.Parser Annot.T
+constant :: Tf.Parser Ast.AnnotLoc
+constant = do
+  Tok.whiteSpace
+  annotateLocation $ Ast.Aconstant <$> (intConstant <|> boolConstant)
+  where
+    intConstant, boolConstant :: Tf.Parser Ast.Constant
+    intConstant = Ast.Cint <$> Tok.integer
+    boolConstant = Ast.Cbool <$> boolTok
+    boolTok :: Tf.Parser Bool
+    boolTok = do
+      ident <- Tok.ident TStyle.emptyIdents
+      case ident of
+        "true" -> pure True
+        "false" -> pure False
+        _ -> empty
+
+typ :: Tf.Parser Ast.AnnotLoc
 typ = PExpr.buildExpressionParser ops atom
       <?> "type"
 
-ops :: PExpr.OperatorTable Tf.Parser Annot.T
+ops :: PExpr.OperatorTable Tf.Parser Ast.AnnotLoc
 ops = [
-    [ binary "->" (annotateLocation3 $ pure Annot.Arrow) AssocRight ],
-    [ binary "&" (annotateLocation3 $ pure Annot.And) AssocRight ],
-    [ binary "|" (annotateLocation3 $ pure Annot.Or) AssocRight ],
-    [ binary "\\" (annotateLocation3 $ pure Annot.Diff) AssocRight ]
+    [ binary "->" (annotateLocation3 $ pure Ast.Aarrow) AssocRight ],
+    [ binary "&" (annotateLocation3 $ pure Ast.Aand) AssocRight ],
+    [ binary "|" (annotateLocation3 $ pure Ast.Aor) AssocRight ],
+    [ binary "\\" (annotateLocation3 $ pure Ast.Adiff) AssocRight ]
   ]
   where
-    binary :: String -> Tf.Parser (Annot.T -> Annot.T -> Annot.T) -> Assoc -> Operator Tf.Parser Annot.T
+    binary :: String -> Tf.Parser (Ast.AnnotLoc -> Ast.AnnotLoc -> Ast.AnnotLoc) -> Assoc -> Operator Tf.Parser Ast.AnnotLoc
     binary  name fun = Infix (fun <* Tok.symbol name)
     -- prefix  name fun = Prefix (fun <* Tok.symbol name)
     -- postfix name fun = Postfix (fun <* Tok.symbol name)
 
-atom :: Tf.Parser Annot.T
-atom = Tok.parens typ <|> baseType <?> "simple type"
+atom :: Tf.Parser Ast.AnnotLoc
+atom = Tok.parens typ <|> try constant <|> baseType <?> "simple type"
 
-typeAnnot :: Delta -> T.Text -> Tf.Result Annot.T
+typeAnnot :: Delta -> T.Text -> Tf.Result Ast.AnnotLoc
 typeAnnot delta = Tf.parseString (Tf.space *> typ) delta . T.unpack

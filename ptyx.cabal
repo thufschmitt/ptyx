@@ -23,7 +23,6 @@ library
                        , Types.FromAnnot
                        , Types.SetTheoretic
                        , Types.Singletons
-                       , NixLight.Annotations
                        , NixLight.Annotations.Parser
                        , NixLight.Ast
                        , NixLight.FromHNix
