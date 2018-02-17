@@ -18,8 +18,8 @@ data T = TrueT
           deriving (Eq, Ord)
 
 instance Show T where
-  show TrueT = "True"
-  show FalseT = "True"
+  show TrueT = "true"
+  show FalseT = "false"
   show Full = "Bool"
   show Empty = "⊥"
 
