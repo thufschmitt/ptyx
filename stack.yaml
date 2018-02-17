@@ -76,4 +76,4 @@ ghc-options:
   ptyx: -Wincomplete-patterns -Werror
 
 nix:
-  path: ["nixpkgs=https://github.com/NixOS/nixpkgs/archive/d15a067856ed97f9b7af0b4cfcc44c7fc2d39107.tar.gz"]
+  path: ["nixpkgs=https://github.com/NixOS/nixpkgs/archive/327a84749ed48a20736fdf20b9dd4f5723b01912.tar.gz"]
