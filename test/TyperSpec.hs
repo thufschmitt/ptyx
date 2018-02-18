@@ -100,6 +100,14 @@ spec = do
       it "higher order" $
         "(x /*: Int -> Int */: x 1) (x /*: Int */: x)"
           `inferredAndChecks` Types.int full
+      it "intersection1" $
+        "let f /*: (Int -> Int) & (Bool -> Bool) */ = x: x; in f 1"
+        `inferredAndChecks`
+        Types.int full
+      it "intersection2" $
+        "let f /*: (Int -> Int) & (Bool -> Bool) */ = x: x; in f true"
+        `inferredAndChecks`
+        Types.bool full
     describe "let-bindings" $ do
       it "trivial" $
         "let x = 1; in x" `inferredAndChecks` Singleton.int 1
