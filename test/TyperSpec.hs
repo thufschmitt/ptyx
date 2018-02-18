@@ -114,6 +114,8 @@ spec = do
       it "trivial annotated" $
         "let x /*: Int */ = 1; in x" `inferredAndChecks` Types.int full
       it "multiple" $
+        "let x = 1; y = x; in y" `inferredAndChecks` full
+      it "multiple annotated" $
         "let x /*: Int */ = 1; y = x; in y" `inferredAndChecks` Types.int full
     describe "If-then-else" $ do
       it "Always true" $
