@@ -1,12 +1,12 @@
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Typer.Infer where
 
 
-import Data.Maybe (fromMaybe)
 import qualified Data.Map as Map
+import           Data.Maybe (fromMaybe)
 import           Data.Monoid ((<>))
 import qualified Data.Set as Set
 import qualified Data.Text as T
@@ -15,14 +15,14 @@ import qualified NixLight.WithLoc as WL
 import qualified Typer.Environ as Env
 import qualified Typer.Error as Error
 import qualified Types
-import qualified Types.Singletons as S
-import qualified Types.FromAnnot
-import qualified Types.Bdd as Bdd
 import qualified Types.Arrow as Arrow
+import qualified Types.Bdd as Bdd
+import qualified Types.FromAnnot
+import qualified Types.Singletons as S
 
 import qualified Control.Monad.Writer as W
 
-import Types.SetTheoretic
+import           Types.SetTheoretic
 
 type WithError = W.Writer [Error.T]
 

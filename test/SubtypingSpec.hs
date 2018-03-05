@@ -1,10 +1,10 @@
 module SubtypingSpec (spec) where
 
-import Test.Hspec
-import qualified Types.Singletons as Singleton
-import Types.SetTheoretic
+import           Test.Hspec
 import qualified Types
 import qualified Types.Arrow as Arrow
+import           Types.SetTheoretic
+import qualified Types.Singletons as Singleton
 
 spec :: Spec
 spec = do

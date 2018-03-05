@@ -1,16 +1,16 @@
 {-# LANGUAGE LambdaCase #-}
-import Nix.Parser
-import Nix.Expr
+import           Nix.Expr
+import           Nix.Parser
 
 import qualified NixLight.FromHNix
-import qualified Typer.Infer as Infer
+import           Typer.Environ ()
 import qualified Typer.Error as Error
+import qualified Typer.Infer as Infer
 import qualified Types
-import Typer.Environ ()
 
-import Data.Default (def)
-import System.Environment
 import qualified Control.Monad.Writer as W
+import           Data.Default (def)
+import           System.Environment
 
 nix :: FilePath -> IO ()
 nix path = parseNixFileLoc path >>= typeAst

@@ -1,18 +1,18 @@
 module TyperSpec (spec) where
 
-import Data.Default
-import Test.Hspec
+import           Data.Default
 import qualified Nix.Parser as NParser
-import qualified NixLight.FromHNix
 import qualified NixLight.Ast as Ast
-import qualified Typer.Infer as Infer
+import qualified NixLight.FromHNix
+import           Test.Hspec
 import qualified Typer.Error
-import qualified Types.Singletons as Singleton
-import Types.SetTheoretic
+import qualified Typer.Infer as Infer
 import qualified Types
 import qualified Types.Arrow as Arrow
+import           Types.SetTheoretic
+import qualified Types.Singletons as Singleton
 
-import Data.Function ((&))
+import           Data.Function ((&))
 
 import qualified Control.Monad.Writer as W
 

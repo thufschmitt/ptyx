@@ -3,15 +3,15 @@
 
 module Typer.Environ.Gamma ( T, insert, lookup ) where
 
-import Prelude hiding (map, lookup)
-import Data.Default (Default, def)
+import           Data.Default (Default, def)
 import qualified Data.Map.Strict as Map
-import Data.Text (Text)
+import           Data.Text (Text)
+import           Prelude hiding (lookup, map)
 import qualified Types
 import qualified Types.Arrow as Arrow
 import qualified Types.Singletons as S
 
-import Types.SetTheoretic (empty, full, neg, (/\))
+import           Types.SetTheoretic (empty, full, neg, (/\))
 
 newtype T = T { getMap :: Map.Map Text Types.T }
   deriving (Monoid)

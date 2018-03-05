@@ -2,8 +2,8 @@
 
 module Typer.Error (T(..)) where
 
-import Nix.Expr (SrcSpan)
 import Data.Text (Text, unpack)
+import Nix.Expr (SrcSpan)
 
 data T = T { location :: SrcSpan, message :: Text }
 

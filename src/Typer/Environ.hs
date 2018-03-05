@@ -2,12 +2,12 @@
 
 module Typer.Environ where
 
+import           Data.Default (Default, def)
+import           Data.Text (Text)
 import qualified Typer.Environ.Gamma as Gamma
-import           Data.Default        (Default, def)
-import Data.Text (Text)
-import Types.Intervals ()
-import Types.SetTheoretic (empty, full)
 import qualified Types
+import           Types.Intervals ()
+import           Types.SetTheoretic (empty, full)
 
 newtype T = T { gamma :: Gamma.T }
 

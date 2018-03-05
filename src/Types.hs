@@ -17,12 +17,12 @@ module Types
   ) where
 
 
-import Prelude
-import Data.List (intercalate)
-import Types.SetTheoretic
+import           Data.List (intercalate)
+import           Prelude
 import qualified Types.Arrow as Arrow
 import qualified Types.Bool as Bool
 import qualified Types.Intervals as Intervals
+import           Types.SetTheoretic
 
 -- | A type is represented by a record whose fields corresponds to its
 -- projections on the various kinds. So a type is the union of its fields.

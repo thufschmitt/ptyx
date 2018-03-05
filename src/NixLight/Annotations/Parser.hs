@@ -3,18 +3,18 @@ module NixLight.Annotations.Parser
   , typeAnnot
   ) where
 
-import qualified NixLight.Ast as Ast
-import qualified NixLight.WithLoc as WL
-import qualified Text.Trifecta as Tf
-import           Text.Trifecta ((<?>))
-import           Text.Trifecta.Delta (Delta)
-import           Text.Parser.Combinators (try)
-import qualified Text.Parser.Token.Style as TStyle
-import qualified Text.Parser.Token as Tok
-import           Text.Parser.Expression as PExpr
+import           Control.Applicative (empty, (<|>))
 import qualified Data.Text as T
 import           Nix.Expr (SrcSpan(..))
-import           Control.Applicative ((<|>), empty)
+import qualified NixLight.Ast as Ast
+import qualified NixLight.WithLoc as WL
+import           Text.Parser.Combinators (try)
+import           Text.Parser.Expression as PExpr
+import qualified Text.Parser.Token as Tok
+import qualified Text.Parser.Token.Style as TStyle
+import           Text.Trifecta ((<?>))
+import qualified Text.Trifecta as Tf
+import           Text.Trifecta.Delta (Delta)
 
 -- Stolen form hnix as it is unexported there
 annotateLocation :: Tf.Parser a -> Tf.Parser (WL.T a)

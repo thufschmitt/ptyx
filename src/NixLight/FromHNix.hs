@@ -1,19 +1,19 @@
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module NixLight.FromHNix where
 
-import Data.Fix (cata)
-import Data.Functor.Compose
+import           Data.Fix (cata)
+import           Data.Functor.Compose
 import qualified Data.Map.Strict as Map
 import qualified Data.Text as T
+import           Nix.Atoms
+import           Nix.Expr
+import qualified NixLight.Annotations.Parser as AnnotParser
 import qualified NixLight.Ast as NL
 import qualified NixLight.WithLoc as WL
-import qualified NixLight.Annotations.Parser as AnnotParser
-import qualified Text.Trifecta.Delta as TD
 import qualified Text.Trifecta as Tri
-import Nix.Expr
-import Nix.Atoms
+import qualified Text.Trifecta.Delta as TD
 
 expr :: NExprLoc -> NL.ExprLoc
 expr = cata phi where

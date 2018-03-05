@@ -1,5 +1,5 @@
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module NixLight.WithLoc where
 

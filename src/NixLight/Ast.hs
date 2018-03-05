@@ -1,8 +1,8 @@
 -- | A simplified version of Nix Ast
 module NixLight.Ast where
 
-import Data.Text (Text)
 import           Data.Map.Strict (Map)
+import           Data.Text (Text)
 import qualified NixLight.WithLoc as WL
 
 data NoLocExpr

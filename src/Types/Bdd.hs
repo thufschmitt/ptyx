@@ -18,7 +18,7 @@ module Types.Bdd (
   )
 where
 
-import Types.SetTheoretic
+import           Types.SetTheoretic
 
 import qualified Data.Set as Set
 

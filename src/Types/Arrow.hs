@@ -15,7 +15,7 @@ module Types.Arrow (
   )
 where
 
-import Types.SetTheoretic
+import           Types.SetTheoretic
 
 import qualified Types.Bdd as Bdd
 
