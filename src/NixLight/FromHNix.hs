@@ -1,11 +1,17 @@
+{-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module NixLight.FromHNix where
 
-import           Control.Monad (join)
+import           Control.Monad (Monad, join)
+import qualified Control.Monad.State as S
 import qualified Control.Monad.Writer as W
+import           Data.Default (def)
 import           Data.Fix (cataM)
 import           Data.Functor.Compose
 import qualified Data.Map.Strict as Map
@@ -22,9 +28,23 @@ import qualified Typer.Error as Error
 import qualified Types
 import qualified Types.FromAnnot as FromAnnot
 
-expr :: NExprLoc -> W.Writer [Error.T] NL.ExprLoc
+type ConvertConstraint m =
+  (W.MonadWriter [Error.T] m, S.MonadState Env.T m, W.MonadFix m)
+
+closedExpr
+  :: forall m.
+     (W.MonadWriter [Error.T] m, W.MonadFix m)
+  => NExprLoc
+  -> m NL.ExprLoc
+closedExpr ex = fst <$> S.runStateT (expr ex) def
+
+expr
+  :: forall m.
+     ConvertConstraint m
+  => NExprLoc
+  -> m NL.ExprLoc
 expr = cataM phi where
-  phi :: NExprLocF NL.ExprLoc -> W.Writer [Error.T] NL.ExprLoc
+  phi :: NExprLocF NL.ExprLoc -> m NL.ExprLoc
   phi (Compose (Ann loc e)) =
     let descr =
           case e of
@@ -113,9 +133,10 @@ trifectaToError (Tri.ErrInfo messageDoc deltas) =
 -- If the input is a 'Tri.Failure', then return the default given value with a
 -- warning.
 trifectaToWarnings
-  :: a -- ^ Default value in case of failure
+  :: W.MonadWriter [Error.T] m
+  => a -- ^ Default value in case of failure
   -> Tri.Result a
-  -> W.Writer [Error.T] a
+  -> m a
 trifectaToWarnings defValue = \case
   Tri.Success x -> pure x
   Tri.Failure err -> do

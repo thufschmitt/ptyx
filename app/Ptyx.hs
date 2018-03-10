@@ -23,7 +23,7 @@ typeAst :: Result NExprLoc -> IO ()
 typeAst = \case
   Failure e -> error $ "Parse failed: " ++ show e
   Success n ->
-    let nlAst = NixLight.FromHNix.expr n in
+    let nlAst = NixLight.FromHNix.closedExpr n in
     displayTypeResult $ Infer.inferExpr def =<< nlAst
 
 displayTypeResult :: W.Writer [Error.T] Types.T -> IO ()

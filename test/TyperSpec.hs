@@ -64,7 +64,7 @@ parseString s = do
   hnixAst <- NixLight.FromHNix.trifectaToWarnings
     (NAst.annToAnnF $ NAst.Ann (NAst.SrcSpan mempty mempty) $ NAst.NSym "undefined")
     $ NParser.parseNixStringLoc s
-  NixLight.FromHNix.expr hnixAst
+  NixLight.FromHNix.closedExpr hnixAst
 
 spec :: Spec
 spec = do

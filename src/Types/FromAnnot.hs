@@ -1,3 +1,5 @@
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Types.FromAnnot where
@@ -18,7 +20,11 @@ import qualified Data.Map as Map
 import           Data.Monoid ((<>))
 import qualified Data.Text as T
 
-parse :: Env.T ->  Ast.AnnotLoc -> W.Writer [Error.T] Types.T
+parse
+  :: (W.MonadWriter [Error.T] m, W.MonadFix m)
+  => Env.T
+  -> Ast.AnnotLoc
+  -> m Types.T
 parse env annot = case WL.descr annot of
   Ast.Aident name -> case Env.lookup name env of
     Nothing -> W.writer (Types.undef, [Error.T (WL.loc annot) "Undefined type"])
@@ -44,7 +50,11 @@ constant :: Ast.Constant -> Types.T
 constant (Ast.Cint i) = Singleton.int i
 constant (Ast.Cbool b) = Singleton.bool b
 
-bindings :: Env.T -> Ast.Abindings -> W.Writer [Error.T] Env.T
+bindings
+  :: (W.MonadWriter [Error.T] m, W.MonadFix m)
+  => Env.T
+  -> Ast.Abindings
+  -> m Env.T
 bindings initEnv binds =
   let mkFinalEnv finalEnv = Env.T <$> mapM (parse $ finalEnv <> initEnv) binds in
   mfix mkFinalEnv
