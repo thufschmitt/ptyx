@@ -54,6 +54,9 @@ data Annot
   | Aand !AnnotLoc !AnnotLoc
   | Adiff !AnnotLoc !AnnotLoc
   | Aconstant !Constant
+  | Awhere !Abindings !AnnotLoc
   deriving (Ord, Eq, Show)
 
 type AnnotLoc = WL.T Annot
+
+type Abindings = Map Text AnnotLoc

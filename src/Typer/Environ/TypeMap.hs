@@ -1,7 +1,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Typer.Environ.Gamma ( T, insert, lookup ) where
+module Typer.Environ.TypeMap ( T(T), insert, lookup, map, getMap ) where
 
 import           Data.Default (Default, def)
 import qualified Data.Map as Map
@@ -26,10 +26,9 @@ lookup :: Text -> T -> Maybe Types.T
 lookup v = Map.lookup v . getMap
 
 instance Default T where
-  def = T $ Map.fromList [
-              ("undefined", empty),
-              ("notInt", neg $ Types.bool full),
-              ("isInt", Types.arrow
-                $ Arrow.atom (Types.int full) (S.bool True)
-                /\ Arrow.atom (neg $ Types.int full) (S.bool False))
-        ]
+  def = T $ Map.fromList
+    [ ("Int", Types.int full)
+    , ("Bool", Types.bool full)
+    , ("Any", full)
+    , ("Empty", empty)
+    ]

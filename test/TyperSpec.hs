@@ -132,6 +132,9 @@ spec = do
       "undefined" `inferredAndChecks` empty
     it "type-annot" $
       "1 /*: Int */" `inferredAndChecks` Types.int full
+    describe "recursive types" $
+      it "simple" $
+        "1 /*: X where X = Y and Y = Int */" `inferredAndChecks` Types.int full
 
   describe "Check only" $
     describe "Application" $

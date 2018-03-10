@@ -30,6 +30,7 @@ library
                        , Typer.Infer
                        , Typer.Environ
                        , Typer.Environ.Gamma
+                       , Typer.Environ.TypeMap
                        , Typer.Error
   build-depends:       base >= 4.7 && < 5
                        , containers

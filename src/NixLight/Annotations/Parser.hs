@@ -4,11 +4,12 @@ module NixLight.Annotations.Parser
   ) where
 
 import           Control.Applicative (empty, (<|>))
+import qualified Data.Map.Strict as Map
 import qualified Data.Text as T
 import           Nix.Expr (SrcSpan(..))
 import qualified NixLight.Ast as Ast
 import qualified NixLight.WithLoc as WL
-import           Text.Parser.Combinators (try)
+import           Text.Parser.Combinators (eof, optional, sepBy1, try)
 import           Text.Parser.Expression as PExpr
 import qualified Text.Parser.Token as Tok
 import qualified Text.Parser.Token.Style as TStyle
@@ -57,9 +58,27 @@ constant = do
         "false" -> pure False
         _ -> empty
 
+typeExpr :: Tf.Parser Ast.AnnotLoc
+typeExpr = PExpr.buildExpressionParser ops atom
+      <?> "type expression"
+
 typ :: Tf.Parser Ast.AnnotLoc
-typ = PExpr.buildExpressionParser ops atom
-      <?> "type"
+typ = (annotateLocation $ do
+  subT <- typeExpr
+  bindsM <- optional $ do
+    Tok.symbol "where"
+    bindings <?> "type bindings"
+  pure $ case bindsM of
+    Just binds -> Ast.Awhere binds subT
+    Nothing -> WL.descr subT)
+  <?> "Type"
+
+bindings :: Tf.Parser Ast.Abindings
+bindings = Map.fromList <$> (flip sepBy1 (Tok.symbol "and") $ do
+  lhs <- Tok.ident TStyle.emptyIdents
+  Tok.symbol "="
+  rhs <- typ
+  pure (lhs, rhs))
 
 ops :: PExpr.OperatorTable Tf.Parser Ast.AnnotLoc
 ops = [
