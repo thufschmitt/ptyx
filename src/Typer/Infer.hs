@@ -52,9 +52,8 @@ inferExpr env (WL.T loc descr) =
         case Env.lookupVariable v env of
           Just t -> pure t
           Nothing -> W.writer (Types.undef, [Error.T loc "Undefined variable"])
-      (NL.Eannot annot e) -> do
+      (NL.Eannot annotType e) -> do
         subExprType <- inferExpr env e
-        annotType <- Types.FromAnnot.parse (Env.typeMap env) annot
         checkSubtype loc subExprType annotType
         pure annotType
       NL.EBinding binds body -> do
@@ -76,8 +75,7 @@ checkExpr env expected (WL.T loc descr) =
         case Env.lookupVariable v env of
           Just t -> checkSubtype loc t expected
           Nothing -> W.tell [Error.T loc "Undefined variable"]
-      NL.Eannot annot e -> do
-        annotType <- Types.FromAnnot.parse (Env.typeMap env) annot
+      NL.Eannot annotType e -> do
         checkSubtype loc annotType expected
         checkExpr env annotType e
       NL.Eabs pat body -> do
@@ -117,9 +115,7 @@ bindings externalEnv binds =
         NL.Inherit -> accuEnv
         NL.NamedVar { NL.annot, NL.rhs = _ } -> do
           env <- accuEnv
-          annotType <- case annot of
-            Nothing -> pure Types.undef
-            Just a -> Types.FromAnnot.parse (Env.typeMap env) a
+          let annotType = fromMaybe Types.undef annot
           pure $ Env.addVariable varName annotType env)
     getFinalEnv initialEnv =
       Map.foldlWithKey (\accuEnv varName -> \case
@@ -130,8 +126,7 @@ bindings externalEnv binds =
           rhsType <-
             case annot of
               Nothing -> inferExpr typingEnv rhs
-              Just t -> do
-                annotType <- Types.FromAnnot.parse (Env.typeMap typingEnv) t
+              Just annotType -> do
                 checkExpr typingEnv annotType rhs
                 pure annotType
           pure $ Env.addVariable varName rhsType env)
@@ -198,10 +193,9 @@ updateEnv loc env previousAnnot pat = case pat of
     let xType = fromMaybe full previousAnnot
     return (Env.addVariable varName xType env, xType)
   NL.Pannot annot sub_pat -> do
-    annotatedType <- Types.FromAnnot.parse (Env.typeMap env) annot
     let virtualAnnot = fromMaybe empty previousAnnot
-    checkSubtype loc virtualAnnot annotatedType
-    updateEnv loc env (Just annotatedType) sub_pat
+    checkSubtype loc virtualAnnot annot
+    updateEnv loc env (Just annot) sub_pat
 
 checkSubtype :: WL.Loc -> Types.T -> Types.T -> WithError ()
 checkSubtype loc t1 t2 =
