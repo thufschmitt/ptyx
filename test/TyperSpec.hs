@@ -1,6 +1,9 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module TyperSpec (spec) where
 
 import           Data.Default
+import qualified Nix.Expr as NAst
 import qualified Nix.Parser as NParser
 import qualified NixLight.Ast as Ast
 import qualified NixLight.FromHNix
@@ -17,11 +20,10 @@ import           Data.Function ((&))
 import qualified Control.Monad.Writer as W
 
 shouldSuccessAs :: (Eq a, Show a)
-                => NParser.Result (W.Writer [Typer.Error.T] a)
+                => W.Writer [Typer.Error.T] a
                 -> a
                 -> Expectation
-shouldSuccessAs (NParser.Failure f) _ = expectationFailure (show f)
-shouldSuccessAs (NParser.Success res) y =
+shouldSuccessAs res y =
   case W.runWriter res of
     (x, []) -> x `shouldBe` y
     (_, errs) -> expectationFailure (show errs)
@@ -29,12 +31,12 @@ shouldSuccessAs (NParser.Success res) y =
 isInferredAs :: String -> Types.T -> Expectation
 isInferredAs prog typ =
   let ast = parseString prog in
-  (Infer.inferExpr def <$> ast) `shouldSuccessAs` typ
+  (Infer.inferExpr def =<< ast) `shouldSuccessAs` typ
 
 checksAgain :: String -> Types.T -> Expectation
 checksAgain prog typ =
   let ast = parseString prog in
-  (Infer.checkExpr def typ <$> ast) `shouldSuccessAs` ()
+  (Infer.checkExpr def typ =<< ast) `shouldSuccessAs` ()
 
 inferredAndChecks :: String -> Types.T -> Expectation
 inferredAndChecks prog typ = do
@@ -42,24 +44,27 @@ inferredAndChecks prog typ = do
   checksAgain prog typ
 
 shouldFail :: Show a
-           => NParser.Result (W.Writer [Typer.Error.T] a)
+           => W.Writer [Typer.Error.T] a
            -> b
            -> Expectation
-shouldFail (NParser.Failure f) _ = expectationFailure (show f)
-shouldFail (NParser.Success res) _y =
+shouldFail res _y =
   case W.runWriter res of
     (x, []) -> expectationFailure
                  $ "Expected an error, but got type " ++ show x
     (_, _) -> pure ()
 
-typeString :: String -> NParser.Result (W.Writer [Typer.Error.T] Types.T)
-typeString s = Infer.inferExpr def <$> parseString s
+typeString :: String -> W.Writer [Typer.Error.T] Types.T
+typeString s = Infer.inferExpr def =<< parseString s
 
-checkString :: String -> Types.T -> NParser.Result (W.Writer [Typer.Error.T] ())
-checkString s typ = Infer.checkExpr def typ <$> parseString s
+checkString :: String -> Types.T -> W.Writer [Typer.Error.T] ()
+checkString s typ = Infer.checkExpr def typ =<< parseString s
 
-parseString :: String -> NParser.Result Ast.ExprLoc
-parseString s = NixLight.FromHNix.expr <$> NParser.parseNixStringLoc s
+parseString :: String -> W.Writer [Typer.Error.T] Ast.ExprLoc
+parseString s = do
+  hnixAst <- NixLight.FromHNix.trifectaToWarnings
+    (NAst.annToAnnF $ NAst.Ann (NAst.SrcSpan mempty mempty) $ NAst.NSym "undefined")
+    $ NParser.parseNixStringLoc s
+  NixLight.FromHNix.expr hnixAst
 
 spec :: Spec
 spec = do

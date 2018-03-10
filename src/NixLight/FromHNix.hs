@@ -1,9 +1,12 @@
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module NixLight.FromHNix where
 
-import           Data.Fix (cata)
+import           Control.Monad (join)
+import qualified Control.Monad.Writer as W
+import           Data.Fix (cataM)
 import           Data.Functor.Compose
 import qualified Data.Map.Strict as Map
 import qualified Data.Text as T
@@ -14,27 +17,31 @@ import qualified NixLight.Ast as NL
 import qualified NixLight.WithLoc as WL
 import qualified Text.Trifecta as Tri
 import qualified Text.Trifecta.Delta as TD
+import qualified Typer.Environ.TypeMap as Env
+import qualified Typer.Error as Error
+import qualified Types
+import qualified Types.FromAnnot as FromAnnot
 
-expr :: NExprLoc -> NL.ExprLoc
-expr = cata phi where
+expr :: NExprLoc -> W.Writer [Error.T] NL.ExprLoc
+expr = cataM phi where
+  phi :: NExprLocF NL.ExprLoc -> W.Writer [Error.T] NL.ExprLoc
   phi (Compose (Ann loc e)) =
     let descr =
           case e of
-            (NConstant c) -> NL.Econstant (constant c)
-            (NAbs param body) -> NL.Eabs (pat param) body
-            (NApp e1 e2) -> NL.Eapp e1 e2
-            (NSym x) -> NL.Evar x
+            (NConstant c) -> pure $ NL.Econstant (constant c)
+            (NAbs param body) -> pure $ NL.Eabs (pat param) body
+            (NApp e1 e2) -> pure $ NL.Eapp e1 e2
+            (NSym x) -> pure $ NL.Evar x
             (NAnnot e' (Annotation ':' annot)) ->
-              case AnnotParser.typeAnnot (spanBegin loc) annot of
-                Tri.Success type_annot ->
-                  NL.Eannot type_annot e'
-                Tri.Failure f -> error $ show f
+              trifectaToWarnings (WL.descr e') $
+                flip NL.Eannot e'
+                  <$> AnnotParser.typeAnnot (spanBegin loc) annot
             NLet binds e' ->
-              NL.EBinding (bindings binds) e'
-            NIf e1 e2 e3 -> NL.EIfThenElse e1 e2 e3
+              pure $ NL.EBinding (bindings binds) e'
+            NIf e1 e2 e3 -> pure $ NL.EIfThenElse e1 e2 e3
             _ -> undefined -- TODO
     in
-    WL.T loc descr
+    WL.T loc <$> descr
 
 constant :: NAtom -> NL.Constant
 constant (NInt i) = NL.Cint i
@@ -90,3 +97,27 @@ bindings =
     addIfAbsent =
       Map.insertWithKey
         (\kName _ _ -> error $ "Duplicate binding: " ++ T.unpack kName)
+
+trifectaToError :: Tri.ErrInfo -> Error.T
+trifectaToError (Tri.ErrInfo messageDoc deltas) =
+  let location = case deltas of
+        [] -> SrcSpan mempty mempty
+        [d0] -> SrcSpan d0 d0
+        d1:d2:_ -> SrcSpan d1 d2
+      message = T.pack $ show messageDoc
+  in
+  Error.T { Error.location, Error.message }
+
+-- | Extract a value (with possibly some warnings) out of a 'Tri.Result a'
+--
+-- If the input is a 'Tri.Failure', then return the default given value with a
+-- warning.
+trifectaToWarnings
+  :: a -- ^ Default value in case of failure
+  -> Tri.Result a
+  -> W.Writer [Error.T] a
+trifectaToWarnings defValue = \case
+  Tri.Success x -> pure x
+  Tri.Failure err -> do
+    W.tell [trifectaToError err]
+    pure defValue
