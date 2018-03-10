@@ -78,4 +78,4 @@ atom :: Tf.Parser Ast.AnnotLoc
 atom = Tok.parens typ <|> try constant <|> baseType <?> "simple type"
 
 typeAnnot :: Delta -> T.Text -> Tf.Result Ast.AnnotLoc
-typeAnnot delta = Tf.parseString (Tf.space *> typ) delta . T.unpack
+typeAnnot delta = Tf.parseString (Tf.spaces *> typ <* eof) delta . T.unpack
