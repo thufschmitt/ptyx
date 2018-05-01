@@ -18,11 +18,11 @@ instance Default T where
 mapGamma :: (Gamma.T -> Gamma.T) -> T -> T
 mapGamma f t = t { gamma = f $ gamma t }
 
-addVariable :: Text -> Types.T -> T -> T
+addVariable :: Text -> Types.Node -> T -> T
 addVariable name typ = mapGamma (Gamma.insert name typ)
 
-lookupVariable :: Text -> T -> Maybe Types.T
+lookupVariable :: Text -> T -> Maybe Types.Node
 lookupVariable name = Gamma.lookup name . gamma
 
-getType :: T -> Text -> Maybe Types.T
+getType :: T -> Text -> Maybe Types.Node
 getType env name = TypeMap.lookup name (typeMap env)

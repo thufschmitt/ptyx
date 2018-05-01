@@ -9,6 +9,7 @@
 module NixLight.FromHNix where
 
 import           Control.Monad (Monad, join)
+import qualified Control.Monad.Random.Class as RClass
 import qualified Control.Monad.State as S
 import qualified Control.Monad.Writer as W
 import           Data.Default (def)
@@ -27,16 +28,17 @@ import qualified Typer.Environ.TypeMap as Env
 import qualified Typer.Error as Error
 import qualified Types
 import qualified Types.FromAnnot as FromAnnot
+import qualified Types.UId as UId
 
 type ConvertConstraint m =
-  (W.MonadWriter [Error.T] m, S.MonadState Env.T m, W.MonadFix m)
+  (W.MonadWriter [Error.T] m, S.MonadState Env.T m, W.MonadFix m, UId.MonadGen m)
 
 closedExpr
   :: forall m.
      (W.MonadWriter [Error.T] m, W.MonadFix m)
   => NExprLoc
   -> m NL.ExprLoc
-closedExpr ex = fst <$> S.runStateT (expr ex) def
+closedExpr ex = fst <$> S.runStateT (UId.runGenT (expr ex) 0) def
 
 expr
   :: forall m.
@@ -144,7 +146,7 @@ annot delta text = do
   join $
     trifectaToWarnings
         (pure Types.undef)
-        (FromAnnot.parse env <$> AnnotParser.typeAnnot delta text)
+        (flip UId.runGenT 0 . FromAnnot.parse env <$> AnnotParser.typeAnnot delta text)
 
 trifectaToError :: Tri.ErrInfo -> Error.T
 trifectaToError (Tri.ErrInfo messageDoc deltas) =

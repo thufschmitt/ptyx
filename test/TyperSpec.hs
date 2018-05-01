@@ -12,6 +12,7 @@ import qualified Typer.Error
 import qualified Typer.Infer as Infer
 import qualified Types
 import qualified Types.Arrow as Arrow
+import qualified Types.Node as Node
 import           Types.SetTheoretic
 import qualified Types.Singletons as Singleton
 
@@ -31,12 +32,12 @@ shouldSuccessAs res y =
 isInferredAs :: String -> Types.T -> Expectation
 isInferredAs prog typ =
   let ast = parseString prog in
-  (Infer.inferExpr def =<< ast) `shouldSuccessAs` typ
+  (Infer.inferExpr def =<< ast) `shouldSuccessAs` Node.noId typ
 
 checksAgain :: String -> Types.T -> Expectation
 checksAgain prog typ =
   let ast = parseString prog in
-  (Infer.checkExpr def typ =<< ast) `shouldSuccessAs` ()
+  (Infer.checkExpr def (Node.noId typ) =<< ast) `shouldSuccessAs` ()
 
 inferredAndChecks :: String -> Types.T -> Expectation
 inferredAndChecks prog typ = do
@@ -53,10 +54,10 @@ shouldFail res _y =
                  $ "Expected an error, but got type " ++ show x
     (_, _) -> pure ()
 
-typeString :: String -> W.Writer [Typer.Error.T] Types.T
+typeString :: String -> W.Writer [Typer.Error.T] Types.Node
 typeString s = Infer.inferExpr def =<< parseString s
 
-checkString :: String -> Types.T -> W.Writer [Typer.Error.T] ()
+checkString :: String -> Types.Node -> W.Writer [Typer.Error.T] ()
 checkString s typ = Infer.checkExpr def typ =<< parseString s
 
 parseString :: String -> W.Writer [Typer.Error.T] Ast.ExprLoc
@@ -84,16 +85,17 @@ spec = do
     describe "Lambdas" $ do
       it "trivial" $
         "x: 1" `inferredAndChecks`
-          Types.arrow (Arrow.atom full (Singleton.int 1))
+          Types.arrow (Arrow.atom full (Node.noId $ Singleton.int 1))
       it "trivial annotated" $
         "x /*: Int */: 1" `inferredAndChecks`
-          Types.arrow (Arrow.atom (Types.int full) (Singleton.int 1))
+          Types.arrow (Arrow.atom (Node.noId $ Types.int full) (Node.noId $ Singleton.int 1))
       it "simple annotated" $
         "x /*: Int */: x" `inferredAndChecks`
-          Types.arrow (Arrow.atom (Types.int full) (Types.int full))
+          Types.arrow (Arrow.atom (Node.noId $ Types.int full) (Node.noId $ Types.int full))
       it "higher order" $
         let intarrint =
-              Types.arrow (Arrow.atom (Types.int full) (Types.int full))
+              Node.noId $
+              Types.arrow (Arrow.atom (Node.noId $ Types.int full) (Node.noId $ Types.int full))
         in
         "(x /*: Int -> Int */: x)" `inferredAndChecks`
           Types.arrow (Arrow.atom intarrint intarrint)
@@ -132,14 +134,15 @@ spec = do
           `inferredAndChecks` (Singleton.int 1 \/ Singleton.int 3)
     it "wrong" $ do
       typeString "(x /*: Empty */: x) 1" & shouldFail
-      checkString "(x /*: Empty */: x) 1" (Types.int full) & shouldFail
+      checkString "(x /*: Empty */: x) 1" (Node.noId $ Types.int full)
+        & shouldFail
     it "undef type" $
       "undefined" `inferredAndChecks` empty
     it "type-annot" $
       "1 /*: Int */" `inferredAndChecks` Types.int full
     describe "recursive types" $
       it "simple" $
-        "1 /*: X where X = Y and Y = Int */" `inferredAndChecks` Types.int full
+        "1 /*: X where X = Y and Y = Int */" `isInferredAs` Types.int full
 
   describe "Check only" $
     describe "Application" $

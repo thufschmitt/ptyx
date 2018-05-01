@@ -8,6 +8,7 @@ Description: Tix used by Tix
 -}
 module Types
   ( T
+  , Node
   , arrows
   , ints
   , arrow
@@ -22,18 +23,21 @@ import           Prelude
 import qualified Types.Arrow as Arrow
 import qualified Types.Bool as Bool
 import qualified Types.Intervals as Intervals
+import qualified Types.Node as Node
 import           Types.SetTheoretic
 
 -- | A type is represented by a record whose fields corresponds to its
 -- projections on the various kinds. So a type is the union of its fields.
 data T = T {
              -- | The arrow part of the type
-             arrows :: Arrow.T T
+             arrows :: Arrow.T Node
              -- | The integral part of the type
            , ints :: Intervals.T
            , bools :: Bool.T
            }
            deriving (Eq, Ord)
+
+type Node = Node.T T
 
 instance Show T where
   show t@T{arrows, ints, bools}
@@ -71,7 +75,7 @@ instance SetTheoretic T where
     sub (ints t1) (ints t2) &&
     sub (bools t1) (bools t2)
 
-arrow :: Arrow.T T -> T
+arrow :: Arrow.T Node -> T
 arrow a = empty { arrows = a }
 
 int :: Intervals.T -> T

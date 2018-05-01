@@ -9,27 +9,28 @@ import           Data.Text (Text)
 import           Prelude hiding (lookup, map)
 import qualified Types
 import qualified Types.Arrow as Arrow
+import qualified Types.Node as Node
 import qualified Types.Singletons as S
 
 import           Types.SetTheoretic (empty, full, neg, (/\))
 
-newtype T = T { getMap :: Map.Map Text Types.T }
+newtype T = T { getMap :: Map.Map Text Types.Node }
   deriving (Monoid)
 
-map :: (Map.Map Text Types.T -> Map.Map Text Types.T) -> T -> T
+map :: (Map.Map Text Types.Node -> Map.Map Text Types.Node) -> T -> T
 map f (T x) = T $ f x
 
-insert :: Text -> Types.T -> T -> T
+insert :: Text -> Types.Node -> T -> T
 insert name val = map (Map.insert name val)
 
-lookup :: Text -> T -> Maybe Types.T
+lookup :: Text -> T -> Maybe Types.Node
 lookup v = Map.lookup v . getMap
 
 instance Default T where
   def = T $ Map.fromList [
               ("undefined", empty),
-              ("notInt", neg $ Types.bool full),
-              ("isInt", Types.arrow
-                $ Arrow.atom (Types.int full) (S.bool True)
-                /\ Arrow.atom (neg $ Types.int full) (S.bool False))
+              ("notInt", Node.noId $ neg $ Types.bool full),
+              ("isInt", Node.noId $ Types.arrow
+                $ Arrow.atom (Node.noId $ Types.int full) (Node.noId $ S.bool True)
+                /\ Arrow.atom (Node.noId $ neg $ Types.int full) (Node.noId $ S.bool False))
         ]
