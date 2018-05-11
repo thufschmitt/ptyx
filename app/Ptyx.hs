@@ -14,18 +14,21 @@ import           Data.Default (def)
 import           System.Environment
 
 nix :: FilePath -> IO ()
-nix path = parseNixFileLoc path >>= typeAst
+nix path = parseNixFileLoc path >>= printTypeAst
 
 nixTypeString :: String -> IO ()
 nixTypeString =
-  typeAst . parseNixStringLoc
+  printTypeAst . parseNixStringLoc
 
-typeAst :: Result NExprLoc -> IO ()
+printTypeAst :: Result NExprLoc -> IO ()
+printTypeAst = displayTypeResult . typeAst
+
+typeAst :: Result NExprLoc -> W.Writer [Error.T] Types.T
 typeAst = \case
   Failure e -> error $ "Parse failed: " ++ show e
   Success n ->
     let nlAst = NixLight.FromHNix.closedExpr n in
-    displayTypeResult $ Node.typ <$> (Infer.inferExpr def =<< nlAst)
+    Node.typ <$> (Infer.inferExpr def =<< nlAst)
 
 displayTypeResult :: W.Writer [Error.T] Types.T -> IO ()
 displayTypeResult res = do

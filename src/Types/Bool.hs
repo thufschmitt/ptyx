@@ -1,3 +1,6 @@
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+
 {-|
  - Description: The type of booleans
  -
@@ -57,6 +60,6 @@ instance SetTheoretic_ T where
   neg = negB
   diff x y = x /\ neg y
 
-instance SetTheoretic T where
-  isEmpty = (==) Empty
-  sub = subB
+instance Monad m => SetTheoretic m T where
+  isEmpty = pure . (==) Empty
+  sub x y = pure $ x `subB` y

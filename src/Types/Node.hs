@@ -1,5 +1,7 @@
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 
 module Types.Node
   ( T(..)
@@ -8,12 +10,15 @@ module Types.Node
   ) where
 
 import           Control.Applicative (liftA2)
-import qualified Control.Monad.State as S
+import qualified Control.Monad.State as SM
+import qualified Data.Set as Set
 import           Types.SetTheoretic
 import qualified Types.UId as UId
 
 data T a = T { typ :: a, id :: Maybe UId.T }
-  deriving (Eq, Ord, Show)
+  deriving (Eq, Ord)
+
+instance Show a => Show (T a) where show = show . typ
 
 instance Functor T where
   fmap f (T x _) = noId $ f x
@@ -36,7 +41,7 @@ instance SetTheoretic_ a => SetTheoretic_ (T a) where
   diff = liftA2 diff
   neg = fmap neg
 
-instance SetTheoretic a => SetTheoretic (T a) where
+instance SetTheoretic m a => SetTheoretic m (T a) where
   isEmpty (T x _) = isEmpty x
   sub (T x _) (T y _) = sub x y
 

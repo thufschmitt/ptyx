@@ -48,7 +48,7 @@ inferExpr env (WL.T loc descr) =
               Arrow.getApplication
                 funTypeArrow
                 argType
-        pure $ Node.noId codom
+        pure codom
       (NL.Evar v) ->
         case Env.lookupVariable v env of
           Just t -> pure t
@@ -202,7 +202,7 @@ updateEnv loc env previousAnnot pat = case pat of
 
 checkSubtype :: WL.Loc -> Types.Node -> Types.Node -> WithError ()
 checkSubtype loc t1 t2 =
-  if sub t1 t2
+  if t1 <: t2
   then pure ()
   else W.tell [Error.T loc $ "Expected a subtype of "
                                <> T.pack (show $ Node.typ t2)

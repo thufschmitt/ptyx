@@ -1,3 +1,6 @@
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+
 {-|
 Description: The type of integers
 
@@ -125,5 +128,5 @@ instance SetTheoretic_ T where
 
   diff i1 i2 = cap i1 (neg i2)
 
-instance SetTheoretic T where
-  isEmpty (Intervals l) = null l
+instance Monad m => SetTheoretic m T where
+  isEmpty (Intervals l) = pure $ null l

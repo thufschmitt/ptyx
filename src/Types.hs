@@ -1,3 +1,5 @@
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RankNTypes #-}
 
@@ -18,6 +20,7 @@ module Types
   ) where
 
 
+import           Data.Functor.Identity (runIdentity)
 import           Data.List (intercalate)
 import           Prelude
 import qualified Types.Arrow as Arrow
@@ -41,12 +44,12 @@ type Node = Node.T T
 
 instance Show T where
   show t@T{arrows, ints, bools}
-    | isEmpty t = "⊥"
-    | isFull t = "⊤"
+    | runIdentity $ isEmpty t = "⊥"
+    | runIdentity $ isFull t = "⊤"
     | otherwise = intercalate " | " $ filter (not . (==) "⊥")
       [show arrows, show ints, show bools]
 
-map2 :: (forall t. SetTheoretic t => t -> t -> t)
+map2 :: (forall t. SetTheoretic_ t => t -> t -> t)
        -> T -> T -> T
 map2 f t1 t2 = T { arrows = f (arrows t1) (arrows t2)
                  , ints = f (ints t1) (ints t2)
@@ -68,11 +71,10 @@ instance SetTheoretic_ T where
   cap = map2 cap
   diff = map2 diff
 
-instance SetTheoretic T where
-  isEmpty x = sub x empty
+instance Monad m => SetTheoretic m T where
   sub t1 t2 =
-    sub (arrows t1) (arrows t2) &&
-    sub (ints t1) (ints t2) &&
+    sub (arrows t1) (arrows t2) <&&>
+    sub (ints t1) (ints t2) <&&>
     sub (bools t1) (bools t2)
 
 arrow :: Arrow.T Node -> T
