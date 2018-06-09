@@ -48,7 +48,7 @@ instance Monad m => UId.MonadGen (ConvertT m) where
     \(env, uid) -> (uid, (env, uid+1))
 
 runConvertMonad
-  :: (W.MonadWriter [Error.T] m, W.MonadFix m)
+  :: Monad m
   => Env.T
   -> UId.T
   -> ConvertT m a
