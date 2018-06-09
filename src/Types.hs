@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NamedFieldPuns #-}
@@ -44,8 +45,8 @@ type Node = Node.T T
 
 instance Show T where
   show t@T{arrows, ints, bools}
-    | runIdentity $ isEmpty t = "⊥"
-    | runIdentity $ isFull t = "⊤"
+    | Node.run mempty $ isEmpty t = "⊥"
+    | Node.run mempty $ isFull t = "⊤"
     | otherwise = intercalate " | " $ filter (not . (==) "⊥")
       [show arrows, show ints, show bools]
 
@@ -71,7 +72,7 @@ instance SetTheoretic_ T where
   cap = map2 cap
   diff = map2 diff
 
-instance Monad m => SetTheoretic m T where
+instance SetTheoretic Node.MemoMonad T where
   sub t1 t2 =
     sub (arrows t1) (arrows t2) <&&>
     sub (ints t1) (ints t2) <&&>

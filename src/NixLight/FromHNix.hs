@@ -1,5 +1,6 @@
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NamedFieldPuns #-}
@@ -33,12 +34,34 @@ import qualified Types.UId as UId
 type ConvertConstraint m =
   (W.MonadWriter [Error.T] m, S.MonadState Env.T m, W.MonadFix m, UId.MonadGen m)
 
+newtype ConvertT m a = ConvertT
+  { state :: S.StateT (Env.T, UId.T) m a
+  }
+  deriving (Functor, Applicative, Monad, W.MonadFix, W.MonadWriter w)
+
+instance Monad m => S.MonadState Env.T (ConvertT m) where
+  state f = ConvertT $ S.state $
+    \(env, uid) -> let (res, newEnv) = f env in (res, (newEnv, uid))
+
+instance Monad m => UId.MonadGen (ConvertT m) where
+  fresh = ConvertT $ S.state $
+    \(env, uid) -> (uid, (env, uid+1))
+
+runConvertMonad
+  :: (W.MonadWriter [Error.T] m, W.MonadFix m)
+  => Env.T
+  -> UId.T
+  -> ConvertT m a
+  -> m a
+runConvertMonad env uid (ConvertT computation) =
+  S.evalStateT computation (env, uid)
+
 closedExpr
   :: forall m.
      (W.MonadWriter [Error.T] m, W.MonadFix m)
   => NExprLoc
   -> m NL.ExprLoc
-closedExpr ex = fst <$> S.runStateT (UId.runGenT (expr ex) 0) def
+closedExpr ex = runConvertMonad def 0 (expr ex)
 
 expr
   :: forall m.
@@ -146,7 +169,7 @@ annot delta text = do
   join $
     trifectaToWarnings
         (pure Types.undef)
-        (flip UId.runGenT 0 . FromAnnot.parse env <$> AnnotParser.typeAnnot delta text)
+        ( FromAnnot.parse env <$> AnnotParser.typeAnnot delta text)
 
 trifectaToError :: Tri.ErrInfo -> Error.T
 trifectaToError (Tri.ErrInfo messageDoc deltas) =

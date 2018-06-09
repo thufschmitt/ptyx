@@ -66,8 +66,8 @@ bindings
   -> Ast.Abindings
   -> m Env.T
 bindings initEnv binds =
-  let mkFinalEnv finalEnv = Env.T <$> mapM (parseRhs $ finalEnv <> initEnv) binds in
-  mfix mkFinalEnv
+  let mkFinalEnv finalEnv = Env.T <$> mapM (parseRhs $ initEnv <> finalEnv) binds in
+  (<> initEnv) <$> mfix mkFinalEnv
   where
     parseRhs env annot = do
       parsed <- parseNode env annot

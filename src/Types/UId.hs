@@ -7,9 +7,7 @@
 -- 'Types.Node.T'
 module Types.UId
   ( T
-  , GenT
   , MonadGen
-  , runGenT
   , fresh
   ) where
 
@@ -20,14 +18,7 @@ import           Data.Coerce (coerce)
 import qualified Data.UUID as U
 import qualified System.Random as R
 
-type T = U.UUID
+type T = Int
 
-type GenT = MR.RandT R.StdGen
-
-type MonadGen = RC.MonadRandom
-
-runGenT :: Monad m => GenT m a -> Int -> m a
-runGenT r seed = MR.evalRandT r (R.mkStdGen seed)
-
-fresh :: MonadGen m => m T
-fresh = MR.getRandom
+class Monad m => MonadGen m where
+  fresh :: m T

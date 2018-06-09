@@ -44,7 +44,7 @@ inferExpr env (WL.T loc descr) =
         checkSubtype loc funType $ (Node.noId $ Types.arrow full)
         let funTypeArrow = Arrow.get $ Types.arrows (Node.typ funType)
         checkSubtype loc argType $ Arrow.compDomain funTypeArrow
-        let codom = Node.typ $
+        let codom = Node.run mempty $
               Arrow.getApplication
                 funTypeArrow
                 argType
