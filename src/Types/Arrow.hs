@@ -2,6 +2,8 @@
 Description: Arrow types
 -}
 
+{-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -17,6 +19,7 @@ module Types.Arrow (
   )
 where
 
+import qualified Types.Node as Node
 import           Types.SetTheoretic
 
 import           Control.Monad (foldM)
@@ -54,9 +57,9 @@ allM :: (Monad m, Foldable t) => (a -> m Bool) -> t a -> m Bool
 allM f = foldM (\acc elt -> if acc then f elt else pure False) True
 
 anyM :: (Monad m, Foldable t) => (a -> m Bool) -> t a -> m Bool
-anyM f l = not <$> allM (\x -> not <$> f x) l
+anyM f = fmap not . allM (\x -> not <$> f x)
 
-isEmptyA :: SetTheoretic m t => T t -> m Bool
+isEmptyA :: (SetTheoretic c t, c m, Monad m) => T t -> m Bool
 isEmptyA (T a)
   | Bdd.isTriviallyEmpty a = pure True
   | Bdd.isTriviallyFull a = pure False
@@ -87,12 +90,13 @@ isEmptyA (T a)
           (\accu elt compl -> accu <&&> f elt compl)
           Set.empty
 
-instance SetTheoretic m t => SetTheoretic m (T t) where
+instance SetTheoretic Node.MemoMonad t => SetTheoretic Node.MemoMonad (T t) where
   isEmpty = isEmptyA
 
 -- | @getApplication arr s@ returns the biggest type @t@ such
 -- that @s -> t <: arr@
-getApplication :: forall t m. SetTheoretic m t => Bdd.DNF (Arrow t) -> t -> m t
+getApplication :: forall t c m.
+  (SetTheoretic c t, c m, Monad m) => Bdd.DNF (Arrow t) -> t -> m t
 getApplication arr s =
   cupN <$> mapM elemApp (Set.toList arr)
   where

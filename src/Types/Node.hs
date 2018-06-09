@@ -1,3 +1,4 @@
+{-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
@@ -5,7 +6,9 @@
 
 module Types.Node
   ( T(..)
+  , MemoMonad
   , noId
+  , run
   , new
   ) where
 
@@ -16,9 +19,16 @@ import           Types.SetTheoretic
 import qualified Types.UId as UId
 
 data T a = T { typ :: a, id :: Maybe UId.T }
-  deriving (Eq, Ord)
+  deriving (Eq, Ord, Show)
 
-instance Show a => Show (T a) where show = show . typ
+-- instance Show a => Show (T a) where show = show . typ
+
+type UIdSet = Set.Set UId.T
+
+type MemoMonad = SM.MonadState UIdSet
+
+run :: UIdSet -> SM.State UIdSet a -> a
+run = flip SM.evalState
 
 instance Functor T where
   fmap f (T x _) = noId $ f x
@@ -41,9 +51,20 @@ instance SetTheoretic_ a => SetTheoretic_ (T a) where
   diff = liftA2 diff
   neg = fmap neg
 
-instance SetTheoretic m a => SetTheoretic m (T a) where
-  isEmpty (T x _) = isEmpty x
-  sub (T x _) (T y _) = sub x y
+instance SetTheoretic MemoMonad a => SetTheoretic MemoMonad (T a) where
+    isEmpty (T x id) = do
+      currentMemo <- SM.get
+      let isAlreadyProven =
+            case id of
+              Nothing -> False
+              Just x -> Set.member x currentMemo
+      if isAlreadyProven
+        then pure True
+        else do
+          case id of
+            Nothing -> pure ()
+            Just x -> SM.put (Set.insert x currentMemo)
+          isEmpty x
 
 new :: UId.MonadGen m => a -> m (T a)
 new elt = do

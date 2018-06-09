@@ -60,6 +60,6 @@ instance SetTheoretic_ T where
   neg = negB
   diff x y = x /\ neg y
 
-instance Monad m => SetTheoretic m T where
+instance SetTheoretic Applicative T where
   isEmpty = pure . (==) Empty
   sub x y = pure $ x `subB` y
