@@ -52,8 +52,8 @@ constant = do
     boolConstant = Ast.Cbool <$> boolTok
     boolTok :: Tf.Parser Bool
     boolTok = do
-      ident <- Tok.ident TStyle.emptyIdents
-      case ident of
+      curIdent <- Tok.ident TStyle.emptyIdents
+      case curIdent of
         "true" -> pure True
         "false" -> pure False
         _ -> empty
@@ -66,7 +66,7 @@ typ :: Tf.Parser Ast.AnnotLoc
 typ = (annotateLocation $ do
   subT <- typeExpr
   bindsM <- optional $ do
-    Tok.symbol "where"
+    _ <- Tok.symbol "where"
     bindings <?> "type bindings"
   pure $ case bindsM of
     Just binds -> Ast.Awhere binds subT
@@ -76,7 +76,7 @@ typ = (annotateLocation $ do
 bindings :: Tf.Parser Ast.Abindings
 bindings = Map.fromList <$> (flip sepBy1 (Tok.symbol "and") $ do
   lhs <- Tok.ident TStyle.emptyIdents
-  Tok.symbol "="
+  _ <- Tok.symbol "="
   rhs <- typ
   pure (lhs, rhs))
 

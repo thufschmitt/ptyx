@@ -17,11 +17,8 @@ import qualified Types.Singletons as Singleton
 import qualified Types.UId as UId
 
 import           Control.Monad.Fix (mfix)
-import qualified Control.Monad.State as S
 import qualified Control.Monad.Writer as W
-import qualified Data.Map as Map
 import           Data.Monoid ((<>))
-import qualified Data.Text as T
 
 parse
   :: (W.MonadWriter [Error.T] m, W.MonadFix m, UId.MonadGen m)

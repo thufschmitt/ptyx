@@ -8,11 +8,8 @@ import qualified Data.Map as Map
 import           Data.Text (Text)
 import           Prelude hiding (lookup, map)
 import qualified Types
-import qualified Types.Arrow as Arrow
-import qualified Types.Node as Node
-import qualified Types.Singletons as S
 
-import           Types.SetTheoretic (empty, full, neg, (/\))
+import           Types.SetTheoretic
 
 newtype T = T { getMap :: Map.Map Text Types.Node }
   deriving (Monoid)

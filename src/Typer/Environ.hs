@@ -8,7 +8,6 @@ import qualified Typer.Environ.Gamma as Gamma
 import qualified Typer.Environ.TypeMap as TypeMap
 import qualified Types
 import           Types.Intervals ()
-import           Types.SetTheoretic (empty, full)
 
 data T = T { gamma :: Gamma.T, typeMap :: TypeMap.T }
 

@@ -52,7 +52,7 @@ instance SetTheoretic_ a => SetTheoretic_ (T a) where
   neg = fmap neg
 
 instance SetTheoretic MemoMonad a => SetTheoretic MemoMonad (T a) where
-    isEmpty (T x id) = do
+  isEmpty T { typ, id } = do
       currentMemo <- SM.get
       let isAlreadyProven =
             case id of
@@ -64,7 +64,7 @@ instance SetTheoretic MemoMonad a => SetTheoretic MemoMonad (T a) where
           case id of
             Nothing -> pure ()
             Just x -> SM.put (Set.insert x currentMemo)
-          isEmpty x
+          isEmpty typ
 
 new :: UId.MonadGen m => a -> m (T a)
 new elt = do

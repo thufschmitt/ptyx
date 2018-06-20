@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -fno-warn-name-shadowing #-}
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -10,7 +11,6 @@
 module NixLight.FromHNix where
 
 import           Control.Monad (Monad, join)
-import qualified Control.Monad.Random.Class as RClass
 import qualified Control.Monad.State as S
 import qualified Control.Monad.Writer as W
 import           Data.Default (def)
@@ -104,8 +104,8 @@ pat (ParamAnnot p _) = pat p
 pat _ = undefined -- TODO
 
 parseTypeAnnot :: TD.Delta -> T.Text -> NL.AnnotLoc
-parseTypeAnnot loc annot =
-  case AnnotParser.typeAnnot loc annot of
+parseTypeAnnot loc rawAnnot =
+  case AnnotParser.typeAnnot loc rawAnnot of
     Tri.Success type_annot -> type_annot
     Tri.Failure f -> error $ show f
 

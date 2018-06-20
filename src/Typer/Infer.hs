@@ -18,7 +18,6 @@ import qualified Typer.Error as Error
 import qualified Types
 import qualified Types.Arrow as Arrow
 import qualified Types.Bdd as Bdd
-import qualified Types.FromAnnot
 import qualified Types.Node as Node
 import qualified Types.Singletons as S
 
