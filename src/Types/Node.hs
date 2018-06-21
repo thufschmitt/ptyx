@@ -28,7 +28,17 @@ import           Types.SetTheoretic
 import qualified Types.UId as UId
 
 data T a = T { typ :: a, id :: Maybe UId.T }
-  deriving (Eq, Ord, Show)
+  deriving (Show)
+
+instance Eq a => Eq (T a) where
+  T { id = Just id1 } == T { id = Just id2 } = id1 == id2
+  T { id = Just _ } == _ = False
+  _ == T { id = Just _ } = False
+  n1 == n2 = typ n1 == typ n2
+
+instance Ord a => Ord (T a) where
+  T { id = Just id1 } `compare` T { id = Just id2 } = id1 `compare` id2
+  n1 `compare` n2 = typ n1 `compare` typ n2
 
 instance ShowM.ShowM (SM.State UIdSet) a
   => ShowM.ShowM (SM.State UIdSet) (T a) where
