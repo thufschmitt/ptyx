@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module TyperSpec (spec) where
+module TyperSpec (spec, typeString) where
 
 import           Data.Default
 import qualified Nix.Expr as NAst
@@ -132,17 +132,20 @@ spec = do
       it "Undecided" $
         "let x /*: Bool */ = true; in if x then 1 else 3"
           `inferredAndChecks` (Singleton.int 1 \/ Singleton.int 3)
-    it "wrong" $ do
-      typeString "(x /*: Empty */: x) 1" & shouldFail
-      checkString "(x /*: Empty */: x) 1" (Node.noId $ Types.int full)
-        & shouldFail
+    describe "wrong" $ do
+      it "inference" $ typeString "(x /*: Empty */: x) 1" & shouldFail
+      it "checking" $
+        checkString "(x /*: Empty */: x) 1" (Node.noId $ Types.int full)
+          & shouldFail
     it "undef type" $
       "undefined" `inferredAndChecks` empty
     it "type-annot" $
       "1 /*: Int */" `inferredAndChecks` Types.int full
-    describe "recursive types" $
+    describe "recursive types" $ do
       it "simple" $
         "1 /*: X where X = Y and Y = Int */" `isInferredAs` Types.int full
+      it "really recursive" $
+        "(1 /*: X where X = Int | X -> Int */) /*: Any */" `isInferredAs` full
 
   describe "Check only" $
     describe "Application" $
