@@ -1,3 +1,6 @@
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+
 {-|
  - Description: The type of booleans
  -
@@ -8,7 +11,8 @@ module Types.Bool (
   T(..)
   ) where
 
-import Types.SetTheoretic
+import qualified Text.ShowM as ShowM
+import           Types.SetTheoretic
 
 
 data T = TrueT
@@ -57,6 +61,9 @@ instance SetTheoretic_ T where
   neg = negB
   diff x y = x /\ neg y
 
-instance SetTheoretic T where
-  isEmpty = (==) Empty
-  sub = subB
+instance SetTheoretic Applicative T where
+  isEmpty = pure . (==) Empty
+  sub x y = pure $ x `subB` y
+
+instance Monad m => ShowM.ShowM m T where
+  showM = ShowM.fromShow

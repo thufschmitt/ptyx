@@ -1,3 +1,6 @@
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+
 {-|
 Description: The type of integers
 
@@ -9,9 +12,10 @@ module Types.Intervals (
   )
 where
 
-import Types.SetTheoretic
+import           Types.SetTheoretic
 
-import Data.List (intercalate)
+import           Data.List (intercalate)
+import qualified Text.ShowM as ShowM
 
 data Bound = Finite Integer
            | PosInfinity
@@ -125,5 +129,8 @@ instance SetTheoretic_ T where
 
   diff i1 i2 = cap i1 (neg i2)
 
-instance SetTheoretic T where
-  isEmpty (Intervals l) = null l
+instance SetTheoretic Applicative T where
+  isEmpty (Intervals l) = pure $ null l
+
+instance Monad m => ShowM.ShowM m T where
+  showM = ShowM.fromShow

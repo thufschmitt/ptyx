@@ -1,18 +1,15 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Typer.Environ.Gamma ( T, insert, lookup ) where
+module Typer.Environ.TypeMap ( T(T), insert, lookup, map, getMap ) where
 
 import           Data.Default (Default, def)
 import qualified Data.Map as Map
 import           Data.Text (Text)
 import           Prelude hiding (lookup, map)
 import qualified Types
-import qualified Types.Arrow as Arrow
-import qualified Types.Node as Node
-import qualified Types.Singletons as S
 
-import           Types.SetTheoretic (empty, full, neg, (/\))
+import           Types.SetTheoretic
 
 newtype T = T { getMap :: Map.Map Text Types.Node }
   deriving (Monoid)
@@ -27,10 +24,9 @@ lookup :: Text -> T -> Maybe Types.Node
 lookup v = Map.lookup v . getMap
 
 instance Default T where
-  def = T $ Map.fromList [
-              ("undefined", empty),
-              ("notInt", Node.noId $ neg $ Types.bool full),
-              ("isInt", Node.noId $ Types.arrow
-                $ Arrow.atom (Node.noId $ Types.int full) (Node.noId $ S.bool True)
-                /\ Arrow.atom (Node.noId $ neg $ Types.int full) (Node.noId $ S.bool False))
-        ]
+  def = T $ Map.fromList
+    [ ("Int", pure $ Types.int full)
+    , ("Bool", pure $ Types.bool full)
+    , ("Any", pure  full)
+    , ("Empty", pure empty)
+    ]

@@ -20,9 +20,11 @@ library
                        , Types.Bool
                        , Types.Intervals
                        , Types
+                       , Types.Node
                        , Types.FromAnnot
                        , Types.SetTheoretic
                        , Types.Singletons
+                       , Types.UId
                        , NixLight.Annotations.Parser
                        , NixLight.Ast
                        , NixLight.FromHNix
@@ -30,7 +32,10 @@ library
                        , Typer.Infer
                        , Typer.Environ
                        , Typer.Environ.Gamma
+                       , Typer.Environ.TypeMap
                        , Typer.Error
+  other-modules:
+    Text.ShowM
   build-depends:       base >= 4.7 && < 5
                        , containers
                        , hnix
@@ -38,9 +43,12 @@ library
                        , data-fix
                        , data-default
                        , deriving-compat
+                       , MonadRandom
                        , trifecta
+                       , uuid
                        , parsers
                        , mtl
+                       , random
   default-language:    Haskell2010
 
 executable ptyx
@@ -64,6 +72,8 @@ test-suite ptyx-test
                      , hspec
                      , data-default
                      , mtl
+                     , trifecta
+                     , text
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   default-language:    Haskell2010
   other-modules:       TyperSpec

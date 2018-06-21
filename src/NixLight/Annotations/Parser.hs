@@ -4,11 +4,12 @@ module NixLight.Annotations.Parser
   ) where
 
 import           Control.Applicative (empty, (<|>))
+import qualified Data.Map.Strict as Map
 import qualified Data.Text as T
 import           Nix.Expr (SrcSpan(..))
 import qualified NixLight.Ast as Ast
 import qualified NixLight.WithLoc as WL
-import           Text.Parser.Combinators (try)
+import           Text.Parser.Combinators (eof, optional, sepBy1, try)
 import           Text.Parser.Expression as PExpr
 import qualified Text.Parser.Token as Tok
 import qualified Text.Parser.Token.Style as TStyle
@@ -51,15 +52,33 @@ constant = do
     boolConstant = Ast.Cbool <$> boolTok
     boolTok :: Tf.Parser Bool
     boolTok = do
-      ident <- Tok.ident TStyle.emptyIdents
-      case ident of
+      curIdent <- Tok.ident TStyle.emptyIdents
+      case curIdent of
         "true" -> pure True
         "false" -> pure False
         _ -> empty
 
+typeExpr :: Tf.Parser Ast.AnnotLoc
+typeExpr = PExpr.buildExpressionParser ops atom
+      <?> "type expression"
+
 typ :: Tf.Parser Ast.AnnotLoc
-typ = PExpr.buildExpressionParser ops atom
-      <?> "type"
+typ = (annotateLocation $ do
+  subT <- typeExpr
+  bindsM <- optional $ do
+    _ <- Tok.symbol "where"
+    bindings <?> "type bindings"
+  pure $ case bindsM of
+    Just binds -> Ast.Awhere binds subT
+    Nothing -> WL.descr subT)
+  <?> "Type"
+
+bindings :: Tf.Parser Ast.Abindings
+bindings = Map.fromList <$> (flip sepBy1 (Tok.symbol "and") $ do
+  lhs <- Tok.ident TStyle.emptyIdents
+  _ <- Tok.symbol "="
+  rhs <- typ
+  pure (lhs, rhs))
 
 ops :: PExpr.OperatorTable Tf.Parser Ast.AnnotLoc
 ops = [
@@ -78,4 +97,4 @@ atom :: Tf.Parser Ast.AnnotLoc
 atom = Tok.parens typ <|> try constant <|> baseType <?> "simple type"
 
 typeAnnot :: Delta -> T.Text -> Tf.Result Ast.AnnotLoc
-typeAnnot delta = Tf.parseString (Tf.space *> typ) delta . T.unpack
+typeAnnot delta = Tf.parseString (Tf.spaces *> typ <* eof) delta . T.unpack

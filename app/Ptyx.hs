@@ -7,24 +7,28 @@ import           Typer.Environ ()
 import qualified Typer.Error as Error
 import qualified Typer.Infer as Infer
 import qualified Types
+import qualified Types.Node as Node
 
 import qualified Control.Monad.Writer as W
 import           Data.Default (def)
 import           System.Environment
 
 nix :: FilePath -> IO ()
-nix path = parseNixFileLoc path >>= typeAst
+nix path = parseNixFileLoc path >>= printTypeAst
 
 nixTypeString :: String -> IO ()
 nixTypeString =
-  typeAst . parseNixStringLoc
+  printTypeAst . parseNixStringLoc
 
-typeAst :: Result NExprLoc -> IO ()
+printTypeAst :: Result NExprLoc -> IO ()
+printTypeAst = displayTypeResult . typeAst
+
+typeAst :: Result NExprLoc -> W.Writer [Error.T] Types.T
 typeAst = \case
   Failure e -> error $ "Parse failed: " ++ show e
   Success n ->
-    let nlAst = NixLight.FromHNix.expr n in
-    displayTypeResult $ Infer.inferExpr def nlAst
+    let nlAst = NixLight.FromHNix.closedExpr n in
+    Node.typ <$> (Infer.inferExpr def =<< nlAst)
 
 displayTypeResult :: W.Writer [Error.T] Types.T -> IO ()
 displayTypeResult res = do
