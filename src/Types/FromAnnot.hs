@@ -4,6 +4,8 @@
 
 module Types.FromAnnot where
 
+import           Prelude hiding (id)
+
 import qualified NixLight.Ast as Ast
 import qualified NixLight.WithLoc as WL
 import qualified Typer.Environ.TypeMap as Env

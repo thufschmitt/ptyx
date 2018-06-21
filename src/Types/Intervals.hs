@@ -12,9 +12,10 @@ module Types.Intervals (
   )
 where
 
-import Types.SetTheoretic
+import           Types.SetTheoretic
 
-import Data.List (intercalate)
+import           Data.List (intercalate)
+import qualified Text.ShowM as ShowM
 
 data Bound = Finite Integer
            | PosInfinity
@@ -130,3 +131,6 @@ instance SetTheoretic_ T where
 
 instance SetTheoretic Applicative T where
   isEmpty (Intervals l) = pure $ null l
+
+instance Monad m => ShowM.ShowM m T where
+  showM = ShowM.fromShow

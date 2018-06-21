@@ -7,8 +7,12 @@ union and intersection.
 Used here to represents set-theoretic combinations of types.
 |-}
 
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Types.Bdd (
   T,
@@ -20,7 +24,10 @@ where
 
 import           Types.SetTheoretic
 
+import           Data.Foldable (foldlM)
+import           Data.Semigroup ((<>))
 import qualified Data.Set as Set
+import qualified Text.ShowM as ShowM
 
 -- | A Binary decision diagram
 data T a
@@ -28,22 +35,30 @@ data T a
     | Split { tif :: a, tthen :: T a, telse :: T a }
     deriving (Eq, Ord)
 
-instance Show a => Show (T a) where
-  show x
-    | isTriviallyEmpty x = "⊥"
-    | isTriviallyFull  x = "⊤"
+instance (Monad m, ShowM.ShowM m a) => ShowM.ShowM m (T a) where
+  showM x
+    | isTriviallyEmpty x = pure "⊥"
+    | isTriviallyFull  x = pure "⊤"
     | otherwise          =
       showDNF $ toListDNF x
       where
-        showDNF = foldl (\acc elt -> showConj elt ++ " | " ++ acc) "⊥"
-        showConj (posAtoms, negAtoms) =
-          parens $ showConjPos posAtoms ++ " & " ++ showConjNeg negAtoms
-        showConjPosNeg discr = foldl
-          (\acc elt -> discr ++ show elt ++ " & " ++ acc)
+        showDNF = foldlM
+          (\acc elt -> do
+            prettyElt <- showConj elt
+            pure $ prettyElt <> " | " <> acc)
+          "⊥"
+        showConj (posAtoms, negAtoms) = do
+          prettyPosAtoms <- showConjPos posAtoms
+          prettyNegAtoms <- showConjNeg negAtoms
+          pure . parens $ prettyPosAtoms <> " & " <> prettyNegAtoms
+        showConjPosNeg discr = foldlM
+          (\acc elt -> do
+            prettyElt <- ShowM.showM elt
+            pure $ discr <> prettyElt <> " & " <> acc)
           "⊤"
         showConjPos = showConjPosNeg ""
         showConjNeg = showConjPosNeg "¬"
-        parens elt = "(" ++ elt ++ ")"
+        parens elt = "(" <> elt <> ")"
 
 -- | @atom x@ Returns the Bdd containing only the atom @x@
 atom :: a -> T a

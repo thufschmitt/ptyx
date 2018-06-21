@@ -3,32 +3,60 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Types.Node
   ( T(..)
   , MemoMonad
+  , Memo
   , noId
   , run
+  , runEmpty
   , new
   ) where
 
+import           Prelude hiding (id)
+
 import           Control.Applicative (liftA2)
 import qualified Control.Monad.State as SM
+import           Data.Semigroup ((<>))
 import qualified Data.Set as Set
+import qualified Data.Text.Lazy.Builder as Builder
+import qualified Text.ShowM as ShowM
 import           Types.SetTheoretic
 import qualified Types.UId as UId
 
 data T a = T { typ :: a, id :: Maybe UId.T }
   deriving (Eq, Ord, Show)
 
+instance ShowM.ShowM (SM.State UIdSet) a
+  => ShowM.ShowM (SM.State UIdSet) (T a) where
+    showMPrec prec T { typ, id = Just id } = do
+      existsInSet <- SM.gets (Set.member id)
+      if existsInSet
+         then pure . Builder.fromString $ ("X" ++ show id)
+         else do
+           let varName = Builder.fromString $ "X" ++ show id
+           body_expr <-
+             SM.withState
+               (Set.insert id) $
+               ShowM.showMPrec prec typ
+           pure $ varName <> " where " <> varName <> " = " <> body_expr
+    showMPrec prec T { typ, id = Nothing } = ShowM.showMPrec prec typ
+
 -- instance Show a => Show (T a) where show = show . typ
 
 type UIdSet = Set.Set UId.T
 
 type MemoMonad = SM.MonadState UIdSet
+type Memo = SM.State UIdSet
 
-run :: UIdSet -> SM.State UIdSet a -> a
+run :: UIdSet -> Memo a -> a
 run = flip SM.evalState
+
+runEmpty :: Memo a -> a
+runEmpty = run Set.empty
 
 instance Functor T where
   fmap f (T x _) = noId $ f x

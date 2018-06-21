@@ -7,6 +7,7 @@ Description: Arrow types
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Types.Arrow (
@@ -23,22 +24,29 @@ import qualified Types.Node as Node
 import           Types.SetTheoretic
 
 import           Control.Monad (foldM)
+import           Data.Semigroup ((<>))
 import qualified Data.Set as Set
+import qualified Text.ShowM as ShowM
 import qualified Types.Bdd as Bdd
 
 -- | Atomic arrow type
 data Arrow t = Arrow t t deriving (Eq, Ord)
 
-instance Show t => Show (Arrow t) where
-  show (Arrow t1 t2) = "(" ++ show t1 ++ ") -> " ++ show t2
+instance ShowM.ShowM m t => ShowM.ShowM m (Arrow t) where
+  showM (Arrow t1 t2) = do
+    prettyT1 <- ShowM.showM t1
+    prettyT2 <- ShowM.showM t2
+    pure $ "(" <> prettyT1 <> ") -> " <> prettyT2
 
 -- | Arrow type
 newtype T t = T (Bdd.T (Arrow t)) deriving (Eq, Ord, SetTheoretic_)
 
-instance Show t => Show (T t) where
-  show (T x) = case show x of
-    "⊥" -> "⊥"
-    tt -> "(" ++ tt ++ ") & (⊥ -> ⊤)"
+instance ShowM.ShowM m t => ShowM.ShowM m (T t) where
+  showM (T x) = do
+    prettyX <- ShowM.showM x
+    case prettyX of
+      "⊥" -> pure "⊥"
+      tt -> pure $ "(" <> tt <> ") & (⊥ -> ⊤)"
 
 -- | Returns the domain of an atomic arrow type
 domain :: Arrow t -> t

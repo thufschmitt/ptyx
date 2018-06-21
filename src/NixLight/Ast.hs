@@ -14,7 +14,7 @@ data NoLocExpr
   | Eannot !Types.T !ExprLoc
   | EBinding !Bindings !ExprLoc
   | EIfThenElse { eif, ethen, eelse :: !ExprLoc }
-  deriving (Ord, Eq, Show)
+  deriving (Ord, Eq)
 
 type ExprLoc = WL.T NoLocExpr
 
@@ -22,12 +22,12 @@ data Constant
   = Cint Integer
   | Cbool Bool
   -- TODO: complete
-  deriving (Ord, Eq, Show)
+  deriving (Ord, Eq)
 
 data Pattern
   = Pvar !Text
   | Pannot !Types.T !Pattern
-  deriving (Ord, Eq, Show)
+  deriving (Ord, Eq)
 
 type Bindings = Map Text BindingDef
 
@@ -46,7 +46,7 @@ data BindingDef
       rhs :: ExprLoc
     }
   | Inherit
-  deriving (Ord, Eq, Show)
+  deriving (Ord, Eq)
 
 data Annot
   = Aident !Text
@@ -56,7 +56,7 @@ data Annot
   | Adiff !AnnotLoc !AnnotLoc
   | Aconstant !Constant
   | Awhere !Abindings !AnnotLoc
-  deriving (Ord, Eq, Show)
+  deriving (Ord, Eq)
 
 type AnnotLoc = WL.T Annot
 

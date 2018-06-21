@@ -22,9 +22,9 @@ module Types
   ) where
 
 
-import           Data.Functor.Identity (runIdentity)
-import           Data.List (intercalate)
+import qualified Data.Text.Lazy as T
 import           Prelude
+import qualified Text.ShowM as ShowM
 import qualified Types.Arrow as Arrow
 import qualified Types.Bool as Bool
 import qualified Types.Intervals as Intervals
@@ -44,12 +44,15 @@ data T = T {
 
 type Node = Node.T T
 
+instance ShowM.ShowM Node.Memo T where
+  showM t@T{arrows, ints, bools}
+    | Node.run mempty $ isEmpty t = pure "⊥"
+    | Node.run mempty $ isFull t = pure "⊤"
+    | otherwise = T.intercalate " | " . filter (not . (==) "⊥") <$>
+      sequenceA [ShowM.showM arrows, ShowM.showM ints, ShowM.showM bools]
+
 instance Show T where
-  show t@T{arrows, ints, bools}
-    | Node.run mempty $ isEmpty t = "⊥"
-    | Node.run mempty $ isFull t = "⊤"
-    | otherwise = intercalate " | " $ filter (not . (==) "⊥")
-      [show arrows, show ints, show bools]
+  show = T.unpack . Node.runEmpty . ShowM.showM
 
 map2 :: (forall t. SetTheoretic_ t => t -> t -> t)
        -> T -> T -> T

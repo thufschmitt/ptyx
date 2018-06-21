@@ -11,7 +11,8 @@ module Types.Bool (
   T(..)
   ) where
 
-import Types.SetTheoretic
+import qualified Text.ShowM as ShowM
+import           Types.SetTheoretic
 
 
 data T = TrueT
@@ -63,3 +64,6 @@ instance SetTheoretic_ T where
 instance SetTheoretic Applicative T where
   isEmpty = pure . (==) Empty
   sub x y = pure $ x `subB` y
+
+instance Monad m => ShowM.ShowM m T where
+  showM = ShowM.fromShow
