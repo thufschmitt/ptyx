@@ -1,0 +1,71 @@
+name: ptyx
+version: 0.1.0.0
+homepage: https://github.com/regnat/ptyx#readme
+license: BSD3
+license-file: LICENSE
+author: Théophane Hufschmitt
+maintainer: theophane@hufschmitt.net
+copyright: 2017 Théophane Hufschmitt
+
+dependencies:
+  - base >= 4.7 && < 5
+
+library:
+  source-dirs: src
+  exposed-modules:
+    - NixLight.Annotations.Parser
+    - NixLight.Ast
+    - NixLight.FromHNix
+    - NixLight.WithLoc
+    - Typer.Environ
+    - Typer.Environ.Gamma
+    - Typer.Environ.TypeMap
+    - Typer.Error
+    - Typer.Infer
+    - Types
+    - Types.Arrow
+    - Types.Bdd
+    - Types.Bool
+    - Types.FromAnnot
+    - Types.Intervals
+    - Types.Node
+    - Types.SetTheoretic
+    - Types.Singletons
+    - Types.UId
+  dependencies:
+    - MonadRandom
+    - containers
+    - data-default
+    - data-fix
+    - deriving-compat
+    - hnix
+    - mtl
+    - parsers
+    - random
+    - text
+    - trifecta
+    - uuid
+
+executables:
+  ptyx:
+    source-dirs: app
+    main: Ptyx.hs
+    dependencies:
+      - ansi-wl-pprint
+      - data-default
+      - hnix
+      - mtl
+      - ptyx
+
+tests:
+  ptyx-test:
+    source-dirs: test
+    main: Spec.hs
+    dependencies:
+      - data-default
+      - hnix
+      - hspec
+      - mtl
+      - ptyx
+      - text
+      - trifecta
