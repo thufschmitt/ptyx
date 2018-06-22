@@ -24,3 +24,6 @@ cabal.project.local
 .HTF/
 
 # End of https://www.gitignore.io/api/haskell
+
+# We use hpack, so the cabal files are generated
+*.cabal
