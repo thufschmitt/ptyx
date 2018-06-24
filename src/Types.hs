@@ -22,6 +22,7 @@ module Types
   ) where
 
 
+import qualified Data.Bool.Applicative as ABool
 import qualified Data.Text.Lazy as T
 import           Prelude
 import qualified Text.ShowM as ShowM
@@ -78,8 +79,8 @@ instance SetTheoretic_ T where
 
 instance SetTheoretic Node.MemoMonad T where
   sub t1 t2 =
-    sub (arrows t1) (arrows t2) <&&>
-    sub (ints t1) (ints t2) <&&>
+    sub (arrows t1) (arrows t2) ABool.&&
+    sub (ints t1) (ints t2) ABool.&&
     sub (bools t1) (bools t2)
 
 arrow :: Arrow.T Node -> T

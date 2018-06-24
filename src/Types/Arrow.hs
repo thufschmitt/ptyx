@@ -23,7 +23,7 @@ where
 import qualified Types.Node as Node
 import           Types.SetTheoretic
 
-import           Control.Monad (foldM)
+import qualified Data.Bool.Applicative as ABool
 import           Data.Semigroup ((<>))
 import qualified Data.Set as Set
 import qualified Text.ShowM as ShowM
@@ -60,30 +60,23 @@ codomain (Arrow _ c) = c
 atom :: t -> t -> T t
 atom dom codom = T (Bdd.atom $ Arrow dom codom)
 
--- | Monadic version of 'all'
-allM :: (Monad m, Foldable t) => (a -> m Bool) -> t a -> m Bool
-allM f = foldM (\acc elt -> if acc then f elt else pure False) True
-
-anyM :: (Monad m, Foldable t) => (a -> m Bool) -> t a -> m Bool
-anyM f = fmap not . allM (\x -> not <$> f x)
-
 isEmptyA :: (SetTheoretic c t, c m, Monad m) => T t -> m Bool
 isEmptyA (T a)
   | Bdd.isTriviallyEmpty a = pure True
   | Bdd.isTriviallyFull a = pure False
   | otherwise =
     let arrow = Bdd.toDNF a in
-    allM emptyIntersect arrow
+    ABool.all emptyIntersect arrow
 
     where
       emptyIntersect (posAtom, negAtom) =
-        anyM (sub' posAtom) negAtom
+        ABool.any (sub' posAtom) negAtom
 
       sub' p (Arrow t1 t2) =
-        subCupDomains t1 p <&&>
-        superCapCodomains t2 p <&&>
+        subCupDomains t1 p ABool.&&
+        superCapCodomains t2 p ABool.&&
         forallStrictSubset
-          (\subset comp -> subCupDomains t1 subset <||> superCapCodomains t1 comp)
+          (\subset comp -> subCupDomains t1 subset ABool.|| superCapCodomains t1 comp)
           p
 
       subCupDomains t p =
@@ -95,7 +88,7 @@ isEmptyA (T a)
       forallStrictSubset f =
         foldStrictSubsets
           (pure True)
-          (\accu elt compl -> accu <&&> f elt compl)
+          (\accu elt compl -> accu ABool.&& f elt compl)
           Set.empty
 
 instance SetTheoretic Node.MemoMonad t => SetTheoretic Node.MemoMonad (T t) where

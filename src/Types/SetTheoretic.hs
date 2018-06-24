@@ -1,4 +1,3 @@
-{-# LANGUAGE ApplicativeDo #-}
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE FlexibleContexts #-}
@@ -13,8 +12,8 @@ Provides set-theoretic connectives and related operations
 -}
 module Types.SetTheoretic where
 
-import           Control.Applicative (liftA2)
 import qualified Control.Monad.State as SM
+import qualified Data.Bool.Applicative as ABool
 
 -- | Typeclass for types with set-theoretic (unions, intersections, ...)
 -- operations
@@ -70,10 +69,4 @@ isFull :: (SetTheoretic c a, c m) => a -> m Bool
 isFull x = isEmpty (full \\ x)
 
 (~:) :: (SetTheoretic (SM.MonadState x) a, Monoid x) => a -> a -> Bool
-a ~: b = flip SM.evalState mempty $ (a `sub` b) <&&> (b `sub` a)
-
-(<&&>) :: Applicative m => m Bool -> m Bool -> m Bool
-(<&&>) = liftA2 (&&)
-
-(<||>) :: Applicative m => m Bool -> m Bool -> m Bool
-(<||>) = liftA2 (||)
+a ~: b = flip SM.evalState mempty $ (a `sub` b) ABool.&& (b `sub` a)
