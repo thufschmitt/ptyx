@@ -29,49 +29,63 @@ import qualified Text.ShowM as ShowM
 import qualified Types.Arrow as Arrow
 import qualified Types.Bool as Bool
 import qualified Types.Intervals as Intervals
+import qualified Types.List as List
 import qualified Types.Node as Node
 import           Types.SetTheoretic
 
 -- | A type is represented by a record whose fields corresponds to its
 -- projections on the various kinds. So a type is the union of its fields.
-data T = T {
-             -- | The arrow part of the type
-             arrows :: Arrow.T Node
-             -- | The integral part of the type
-           , ints :: Intervals.T
-           , bools :: Bool.T
-           }
-           deriving (Eq, Ord)
+data T = T
+  {
+  -- | The arrow part of the type
+  arrows :: Arrow.T Node
+  -- | The integral part of the type
+  , ints :: Intervals.T
+  , bools :: Bool.T
+  , lists :: List.T Node
+  }
+  deriving (Eq, Ord)
 
 type Node = Node.T T
 
 instance ShowM.ShowM Node.Memo T where
-  showM t@T{arrows, ints, bools}
+  showM t@T{arrows, ints, bools, lists}
     | Node.run mempty $ isEmpty t = pure "⊥"
     | Node.run mempty $ isFull t = pure "⊤"
     | otherwise = T.intercalate " | " . filter (not . (==) "⊥") <$>
-      sequenceA [ShowM.showM arrows, ShowM.showM ints, ShowM.showM bools]
+      sequenceA
+      [ ShowM.showM arrows
+      , ShowM.showM ints
+      , ShowM.showM bools
+      , ShowM.showM lists
+      ]
 
 instance Show T where
   show = T.unpack . Node.runEmpty . ShowM.showM
 
 map2 :: (forall t. SetTheoretic_ t => t -> t -> t)
        -> T -> T -> T
-map2 f t1 t2 = T { arrows = f (arrows t1) (arrows t2)
-                 , ints = f (ints t1) (ints t2)
-                 , bools = f (bools t1) (bools t2)
-                 }
+map2 f t1 t2 = T
+  { arrows = f (arrows t1) (arrows t2)
+  , ints = f (ints t1) (ints t2)
+  , bools = f (bools t1) (bools t2)
+  , lists = f (lists t1) (lists t2)
+  }
 
 instance SetTheoretic_ T where
-  empty = T { arrows = empty
-            , ints = empty
-            , bools = empty
-            }
+  empty = T
+    { arrows = empty
+    , ints = empty
+    , bools = empty
+    , lists = empty
+    }
 
-  full = T { arrows = full
-           , ints   = full
-           , bools = full
-           }
+  full = T
+    { arrows = full
+    , ints   = full
+    , bools = full
+    , lists = full
+    }
 
   cup = map2 cup
   cap = map2 cap
@@ -81,7 +95,8 @@ instance SetTheoretic Node.MemoMonad T where
   sub t1 t2 =
     sub (arrows t1) (arrows t2) ABool.&&
     sub (ints t1) (ints t2) ABool.&&
-    sub (bools t1) (bools t2)
+    sub (bools t1) (bools t2) ABool.&&
+    sub (lists t1) (lists t2)
 
 arrow :: Arrow.T Node -> T
 arrow a = empty { arrows = a }
@@ -91,6 +106,9 @@ int i = empty { ints = i }
 
 bool :: Bool.T -> T
 bool b = empty { bools = b }
+
+list :: List.T Node -> T
+list l = empty { lists = l }
 
 undef :: T
 undef = full
