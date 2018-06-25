@@ -85,12 +85,6 @@ isEmptyA (T a)
       superCapCodomains t p =
         capN (Set.map codomain p) `sub` t
 
-      forallStrictSubset f =
-        foldStrictSubsets
-          (pure True)
-          (\accu elt compl -> accu ABool.&& f elt compl)
-          Set.empty
-
 instance SetTheoretic Node.MemoMonad t => SetTheoretic Node.MemoMonad (T t) where
   isEmpty = isEmptyA
 
@@ -103,7 +97,7 @@ getApplication arr s =
   where
     elemApp :: (Set.Set (Arrow t), Set.Set (Arrow t)) -> m t
     elemApp (pos, _) =
-      foldStrictSubsets (pure empty) addElemApp pos Set.empty
+      foldStrictSubsets (pure empty) addElemApp pos
     addElemApp :: m t -> Set.Set (Arrow t) -> Set.Set (Arrow t) -> m t
     addElemApp accM subset compl = do
       acc <- accM
@@ -112,28 +106,6 @@ getApplication arr s =
         if isInDomains
         then acc
         else acc `cup` capN (Set.map codomain compl)
-
-foldStrictSubsets ::
-     Ord a
-  => b
-  -> (b -> Set.Set a -> Set.Set a -> b)
-  -> Set.Set a
-  -> Set.Set a
-  -> b
-foldStrictSubsets foldInit f elts removedElts =
-    let
-      directsubsets =
-                    [ (Set.delete x elts, Set.insert x removedElts)
-                    | x <- Set.toList elts ]
-    in
-    foldl
-      (\accu (subset, compl) ->
-        f
-          (foldStrictSubsets accu f subset compl)
-          subset
-          compl)
-      foldInit
-      directsubsets
 
 -- | Get the domain of a composed arrow
 compDomain :: forall t. SetTheoretic_ t => Bdd.DNF (Arrow t) -> t

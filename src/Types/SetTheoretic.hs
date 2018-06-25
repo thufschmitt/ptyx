@@ -14,6 +14,7 @@ module Types.SetTheoretic where
 
 import qualified Control.Monad.State as SM
 import qualified Data.Bool.Applicative as ABool
+import qualified Data.Set as Set
 
 -- | Typeclass for types with set-theoretic (unions, intersections, ...)
 -- operations
@@ -70,3 +71,41 @@ isFull x = isEmpty (full \\ x)
 
 (~:) :: (SetTheoretic (SM.MonadState x) a, Monoid x) => a -> a -> Bool
 a ~: b = flip SM.evalState mempty $ (a `sub` b) ABool.&& (b `sub` a)
+
+-- |
+-- Performs a 'fold' over all the (strict) subsets of the given set
+foldStrictSubsets
+  :: Ord a
+  => b -- ^ Init
+  -> (b -> Set.Set a -> Set.Set a -> b) -- ^ Accum function
+  -> Set.Set a -- ^ Set to fold on
+  -> b
+foldStrictSubsets = \foldInit f elts -> aux foldInit f elts Set.empty
+  where
+    aux foldInit f elts removedElts =
+      let
+        directsubsets =
+                      [ (Set.delete x elts, Set.insert x removedElts)
+                      | x <- Set.toList elts ]
+      in
+      foldl
+        (\accu (subset, compl) ->
+          f
+            (aux accu f subset compl)
+            subset
+            compl)
+        foldInit
+        directsubsets
+
+-- |
+-- Checks whether the given property holds for every (strict) subset of the
+-- given set
+forallStrictSubset
+  :: (Ord a, Applicative f)
+  => (Set.Set a -> Set.Set a -> f Bool)
+  -> Set.Set a
+  -> f Bool
+forallStrictSubset f =
+  foldStrictSubsets
+    (pure True)
+    (\accu elt compl -> accu ABool.&& f elt compl)
