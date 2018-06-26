@@ -3,6 +3,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 
 {-|
@@ -75,14 +76,17 @@ a ~: b = flip SM.evalState mempty $ (a `sub` b) ABool.&& (b `sub` a)
 -- |
 -- Performs a 'fold' over all the (strict) subsets of the given set
 foldStrictSubsets
-  :: Ord a
-  => b -- ^ Init
-  -> (b -> Set.Set a -> Set.Set a -> b) -- ^ Accum function
-  -> Set.Set a -- ^ Set to fold on
+  :: forall a b.
+     Ord a
+  => b
+  -> (b -> Set.Set a -> Set.Set a -> b)
+  -> Set.Set a
+  -> Set.Set a
   -> b
-foldStrictSubsets = \foldInit f elts -> aux foldInit f elts Set.empty
+foldStrictSubsets fi f e= aux fi e
   where
-    aux foldInit f elts removedElts =
+    aux :: b -> Set.Set a -> Set.Set a -> b
+    aux foldInit elts removedElts =
       let
         directsubsets =
                       [ (Set.delete x elts, Set.insert x removedElts)
@@ -91,7 +95,7 @@ foldStrictSubsets = \foldInit f elts -> aux foldInit f elts Set.empty
       foldl
         (\accu (subset, compl) ->
           f
-            (aux accu f subset compl)
+            (aux accu subset compl)
             subset
             compl)
         foldInit
@@ -109,3 +113,4 @@ forallStrictSubset f =
   foldStrictSubsets
     (pure True)
     (\accu elt compl -> accu ABool.&& f elt compl)
+    Set.empty

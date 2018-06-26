@@ -9,6 +9,7 @@ Description: Arrow types
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module Types.Arrow (
   T(..), Arrow(..),
@@ -26,6 +27,7 @@ import           Types.SetTheoretic
 import qualified Data.Bool.Applicative as ABool
 import           Data.Semigroup ((<>))
 import qualified Data.Set as Set
+import qualified Data.Text.Lazy as T
 import qualified Text.ShowM as ShowM
 import qualified Types.Bdd as Bdd
 
@@ -37,6 +39,9 @@ instance ShowM.ShowM m t => ShowM.ShowM m (Arrow t) where
     prettyT1 <- ShowM.showM t1
     prettyT2 <- ShowM.showM t2
     pure $ "(" <> prettyT1 <> ") -> " <> prettyT2
+
+instance ShowM.ShowM Node.Memo t => Show (Arrow t) where
+  show = T.unpack . Node.runEmpty . ShowM.showM
 
 -- | Arrow type
 newtype T t = T (Bdd.T (Arrow t)) deriving (Eq, Ord, SetTheoretic_)
@@ -85,6 +90,7 @@ isEmptyA (T a)
       superCapCodomains t p =
         capN (Set.map codomain p) `sub` t
 
+
 instance SetTheoretic Node.MemoMonad t => SetTheoretic Node.MemoMonad (T t) where
   isEmpty = isEmptyA
 
@@ -97,7 +103,7 @@ getApplication arr s =
   where
     elemApp :: (Set.Set (Arrow t), Set.Set (Arrow t)) -> m t
     elemApp (pos, _) =
-      foldStrictSubsets (pure empty) addElemApp pos
+      foldStrictSubsets (pure empty) addElemApp pos Set.empty
     addElemApp :: m t -> Set.Set (Arrow t) -> Set.Set (Arrow t) -> m t
     addElemApp accM subset compl = do
       acc <- accM
