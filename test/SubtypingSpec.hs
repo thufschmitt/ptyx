@@ -14,7 +14,7 @@ import qualified Text.Trifecta.Delta as TfDelta
 import qualified Types
 import qualified Types.Arrow as Arrow
 import qualified Types.FromAnnot as FromAnnot
-import qualified Types.List as List
+import qualified Types.Pair as Pair
 import           Types.SetTheoretic
 import qualified Types.Singletons as Singleton
 
@@ -51,13 +51,13 @@ spec = do
         Arrow.atom (full :: Types.T) empty <: Arrow.atom empty empty
     describe "pairs" $ do
       it "(1,1)<:(1,1)" $
-        List.atomic one one <: List.atomic one one
+        Pair.atomic one one <: Pair.atomic one one
       it "(1,1)<:(1,Int)" $
-        List.atomic one one <: List.atomic one (Types.int full)
+        Pair.atomic one one <: Pair.atomic one (Types.int full)
       it "(1,1)<:(Int,1)" $
-        List.atomic one one <: List.atomic (Types.int full) one
+        Pair.atomic one one <: Pair.atomic (Types.int full) one
       it "(Int, 1)</:(1, 1)" $ not $
-        List.atomic (Types.int full) one <: List.atomic one one
+        Pair.atomic (Types.int full) one <: Pair.atomic one one
   describe "Inter-kind" $ do
     it "Empty<:Any" $ (empty :: Types.T) <: full
     it "Any</:Empty" $ not $ (full :: Types.T) <: empty

@@ -6,7 +6,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Types.List
+module Types.Pair
   ( T(..)
   , atomic
   ) where
@@ -38,7 +38,7 @@ instance ShowM.ShowM m t => ShowM.ShowM m (T t) where
       "⊥" -> pure "⊥"
       tt -> pure $ "(" <> tt <> ") & [⊤*]"
 
--- | Build an atomic list type
+-- | Build an atomic pair type
 atomic :: t -> t -> T t
 atomic hd tl = T (Bdd.atom $ Atom hd tl)
 

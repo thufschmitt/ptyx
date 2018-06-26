@@ -29,6 +29,7 @@ library:
     - Types.FromAnnot
     - Types.Intervals
     - Types.Node
+    - Types.Pair
     - Types.SetTheoretic
     - Types.Singletons
     - Types.UId

@@ -29,8 +29,8 @@ import qualified Text.ShowM as ShowM
 import qualified Types.Arrow as Arrow
 import qualified Types.Bool as Bool
 import qualified Types.Intervals as Intervals
-import qualified Types.List as List
 import qualified Types.Node as Node
+import qualified Types.Pair as Pair
 import           Types.SetTheoretic
 
 -- | A type is represented by a record whose fields corresponds to its
@@ -42,14 +42,14 @@ data T = T
   -- | The integral part of the type
   , ints :: Intervals.T
   , bools :: Bool.T
-  , lists :: List.T Node
+  , pairs :: Pair.T Node
   }
   deriving (Eq, Ord)
 
 type Node = Node.T T
 
 instance ShowM.ShowM Node.Memo T where
-  showM t@T{arrows, ints, bools, lists}
+  showM t@T{arrows, ints, bools, pairs}
     | Node.run mempty $ isEmpty t = pure "⊥"
     | Node.run mempty $ isFull t = pure "⊤"
     | otherwise = T.intercalate " | " . filter (not . (==) "⊥") <$>
@@ -57,7 +57,7 @@ instance ShowM.ShowM Node.Memo T where
       [ ShowM.showM arrows
       , ShowM.showM ints
       , ShowM.showM bools
-      , ShowM.showM lists
+      , ShowM.showM pairs
       ]
 
 instance Show T where
@@ -69,7 +69,7 @@ map2 f t1 t2 = T
   { arrows = f (arrows t1) (arrows t2)
   , ints = f (ints t1) (ints t2)
   , bools = f (bools t1) (bools t2)
-  , lists = f (lists t1) (lists t2)
+  , pairs = f (pairs t1) (pairs t2)
   }
 
 instance SetTheoretic_ T where
@@ -77,14 +77,14 @@ instance SetTheoretic_ T where
     { arrows = empty
     , ints = empty
     , bools = empty
-    , lists = empty
+    , pairs = empty
     }
 
   full = T
     { arrows = full
     , ints   = full
     , bools = full
-    , lists = full
+    , pairs = full
     }
 
   cup = map2 cup
@@ -96,7 +96,7 @@ instance SetTheoretic Node.MemoMonad T where
     sub (arrows t1) (arrows t2) ABool.&&
     sub (ints t1) (ints t2) ABool.&&
     sub (bools t1) (bools t2) ABool.&&
-    sub (lists t1) (lists t2)
+    sub (pairs t1) (pairs t2)
 
 arrow :: Arrow.T Node -> T
 arrow a = empty { arrows = a }
@@ -107,8 +107,8 @@ int i = empty { ints = i }
 bool :: Bool.T -> T
 bool b = empty { bools = b }
 
-list :: List.T Node -> T
-list l = empty { lists = l }
+pair :: Pair.T Node -> T
+pair l = empty { pairs = l }
 
 undef :: T
 undef = full
