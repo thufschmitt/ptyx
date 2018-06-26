@@ -13,6 +13,7 @@ import qualified Text.Trifecta as Trifecta
 import qualified Text.Trifecta.Delta as TfDelta
 import qualified Types
 import qualified Types.Arrow as Arrow
+import qualified Types.Distinguished as Dist
 import qualified Types.FromAnnot as FromAnnot
 import qualified Types.Pair as Pair
 import           Types.SetTheoretic
@@ -49,6 +50,10 @@ spec = do
         Arrow.atom (full :: Types.T) empty <: Arrow.atom full full
       it "domain-contravariant" $
         Arrow.atom (full :: Types.T) empty <: Arrow.atom empty empty
+    describe "distinguished" $ do
+      it "Nil<:Nil" $ Dist.nil <: Dist.nil
+      it "Nil<:1" $ Dist.nil <: full
+      it "0<:Nil" $ empty <: Dist.nil
     describe "pairs" $ do
       it "(1,1)<:(1,1)" $
         Pair.atomic one one <: Pair.atomic one one

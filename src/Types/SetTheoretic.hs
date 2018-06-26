@@ -1,6 +1,7 @@
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -72,6 +73,17 @@ isFull x = isEmpty (full \\ x)
 
 (~:) :: (SetTheoretic (SM.MonadState x) a, Monoid x) => a -> a -> Bool
 a ~: b = flip SM.evalState mempty $ (a `sub` b) ABool.&& (b `sub` a)
+
+instance (Ord a, Enum a, Bounded a) => SetTheoretic_ (Set.Set a) where
+  empty = Set.empty
+  full = Set.fromList [minBound..maxBound]
+  cup = Set.union
+  cap = Set.intersection
+  diff = Set.difference
+
+instance (Ord a, Enum a, Bounded a) => SetTheoretic (SM.MonadState ()) (Set.Set a) where
+  isEmpty = pure . Set.null
+  sub x y = pure $ Set.isSubsetOf x y
 
 -- |
 -- Performs a 'fold' over all the (strict) subsets of the given set
