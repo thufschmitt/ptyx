@@ -15,6 +15,7 @@ import qualified Types
 import qualified Types.Arrow as Arrow
 import qualified Types.Distinguished as Dist
 import qualified Types.FromAnnot as FromAnnot
+import qualified Types.Node as Node
 import qualified Types.Pair as Pair
 import           Types.SetTheoretic
 import qualified Types.Singletons as Singleton
@@ -63,6 +64,20 @@ spec = do
         Pair.atomic one one <: Pair.atomic (Types.int full) one
       it "(Int, 1)</:(1, 1)" $ not $
         Pair.atomic (Types.int full) one <: Pair.atomic one one
+    describe "lists" $ do
+      let
+        intStar = Node.T intStarT (Just 0)
+        nil = Types.dist Dist.nil
+        intStarT = nil \/
+          Types.pair (Pair.atomic (Node.noId $ Types.int full) intStar)
+        intSingl =
+          Types.pair (Pair.atomic (Node.noId $ Types.int full) (Node.noId nil))
+      it "[Int*]<:[Int*]" $ intStar <: intStar
+      it "[]<:[Int*]" $ Types.dist Dist.nil <: intStarT
+      it "[Int]<:[Int*]" $
+        intSingl <: intStarT
+      it "[Int*]</:[Int]" $ not $
+        intStarT <: intSingl
   describe "Inter-kind" $ do
     it "Empty<:Any" $ (empty :: Types.T) <: full
     it "Any</:Empty" $ not $ (full :: Types.T) <: empty

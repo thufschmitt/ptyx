@@ -18,6 +18,8 @@ module Types
   , arrow
   , int
   , bool
+  , dist
+  , pair
   , undef
   ) where
 
@@ -29,6 +31,7 @@ import           Prelude
 import qualified Text.ShowM as ShowM
 import qualified Types.Arrow as Arrow
 import qualified Types.Bool as Bool
+import qualified Types.Distinguished as Distinguished
 import qualified Types.Intervals as Intervals
 import qualified Types.Node as Node
 import qualified Types.Pair as Pair
@@ -44,13 +47,14 @@ data T = T
   , ints :: Intervals.T
   , bools :: Bool.T
   , pairs :: Pair.T Node
+  , distinguished :: Distinguished.T
   }
   deriving (Eq, Ord)
 
 type Node = Node.T T
 
 instance ShowM.ShowM Memo.T T where
-  showM t@T{arrows, ints, bools, pairs}
+  showM t@T{arrows, ints, bools, pairs, distinguished}
     | Memo.runEmpty $ isEmpty t = pure "⊥"
     | Memo.runEmpty $ isFull t = pure "⊤"
     | otherwise = T.intercalate " | " . filter (not . (==) "⊥") <$>
@@ -59,6 +63,7 @@ instance ShowM.ShowM Memo.T T where
       , ShowM.showM ints
       , ShowM.showM bools
       , ShowM.showM pairs
+      , ShowM.showM distinguished
       ]
 
 instance Show T where
@@ -71,6 +76,7 @@ map2 f t1 t2 = T
   , ints = f (ints t1) (ints t2)
   , bools = f (bools t1) (bools t2)
   , pairs = f (pairs t1) (pairs t2)
+  , distinguished = f (distinguished t1) (distinguished t2)
   }
 
 instance SetTheoretic_ T where
@@ -79,6 +85,7 @@ instance SetTheoretic_ T where
     , ints = empty
     , bools = empty
     , pairs = empty
+    , distinguished = empty
     }
 
   full = T
@@ -86,6 +93,7 @@ instance SetTheoretic_ T where
     , ints   = full
     , bools = full
     , pairs = full
+    , distinguished = full
     }
 
   cup = map2 cup
@@ -97,7 +105,8 @@ instance SetTheoretic T where
     sub (arrows t1) (arrows t2) ABool.&&
     sub (ints t1) (ints t2) ABool.&&
     sub (bools t1) (bools t2) ABool.&&
-    sub (pairs t1) (pairs t2)
+    sub (pairs t1) (pairs t2) ABool.&&
+    sub (distinguished t1) (distinguished t2)
 
 arrow :: Arrow.T Node -> T
 arrow a = empty { arrows = a }
@@ -110,6 +119,9 @@ bool b = empty { bools = b }
 
 pair :: Pair.T Node -> T
 pair l = empty { pairs = l }
+
+dist :: Distinguished.T -> T
+dist d = empty { distinguished = d }
 
 undef :: T
 undef = full
