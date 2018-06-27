@@ -15,7 +15,7 @@ data Atom
   deriving (Eq, Ord, Enum, Bounded)
 
 newtype T = T (Set.Set Atom)
-  deriving (Eq, Ord, SetTheoretic_, SetTheoretic (SM.MonadState ()))
+  deriving (Eq, Ord, SetTheoretic_, SetTheoretic)
 
 atomic :: Atom -> T
 atomic = T . Set.singleton

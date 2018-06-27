@@ -8,17 +8,14 @@
 
 module Types.Node
   ( T(..)
-  , MemoMonad
-  , Memo
   , noId
-  , run
-  , runEmpty
   , new
   ) where
 
 import           Prelude hiding (id)
 
 import           Control.Applicative (liftA2)
+import qualified Control.Monad.Memo as Memo
 import qualified Control.Monad.State as SM
 import           Data.Semigroup ((<>))
 import qualified Data.Set as Set
@@ -40,8 +37,8 @@ instance Ord a => Ord (T a) where
   T { id = Just id1 } `compare` T { id = Just id2 } = id1 `compare` id2
   n1 `compare` n2 = typ n1 `compare` typ n2
 
-instance ShowM.ShowM (SM.State UIdSet) a
-  => ShowM.ShowM (SM.State UIdSet) (T a) where
+instance ShowM.ShowM Memo.T a
+  => ShowM.ShowM Memo.T (T a) where
     showMPrec prec T { typ, id = Just id } = do
       existsInSet <- SM.gets (Set.member id)
       if existsInSet
@@ -54,19 +51,6 @@ instance ShowM.ShowM (SM.State UIdSet) a
                ShowM.showMPrec prec typ
            pure $ varName <> " where " <> varName <> " = " <> body_expr
     showMPrec prec T { typ, id = Nothing } = ShowM.showMPrec prec typ
-
--- instance Show a => Show (T a) where show = show . typ
-
-type UIdSet = Set.Set UId.T
-
-type MemoMonad = SM.MonadState UIdSet
-type Memo = SM.State UIdSet
-
-run :: UIdSet -> Memo a -> a
-run = flip SM.evalState
-
-runEmpty :: Memo a -> a
-runEmpty = run Set.empty
 
 instance Functor T where
   fmap f (T x _) = noId $ f x
@@ -89,7 +73,7 @@ instance SetTheoretic_ a => SetTheoretic_ (T a) where
   diff = liftA2 diff
   neg = fmap neg
 
-instance SetTheoretic MemoMonad a => SetTheoretic MemoMonad (T a) where
+instance SetTheoretic a => SetTheoretic (T a) where
   isEmpty T { typ, id } = do
       currentMemo <- SM.get
       let isAlreadyProven =

@@ -22,6 +22,7 @@ module Types
   ) where
 
 
+import qualified Control.Monad.Memo as Memo
 import qualified Data.Bool.Applicative as ABool
 import qualified Data.Text.Lazy as T
 import           Prelude
@@ -48,10 +49,10 @@ data T = T
 
 type Node = Node.T T
 
-instance ShowM.ShowM Node.Memo T where
+instance ShowM.ShowM Memo.T T where
   showM t@T{arrows, ints, bools, pairs}
-    | Node.run mempty $ isEmpty t = pure "⊥"
-    | Node.run mempty $ isFull t = pure "⊤"
+    | Memo.runEmpty $ isEmpty t = pure "⊥"
+    | Memo.runEmpty $ isFull t = pure "⊤"
     | otherwise = T.intercalate " | " . filter (not . (==) "⊥") <$>
       sequenceA
       [ ShowM.showM arrows
@@ -61,7 +62,7 @@ instance ShowM.ShowM Node.Memo T where
       ]
 
 instance Show T where
-  show = T.unpack . Node.runEmpty . ShowM.showM
+  show = T.unpack . Memo.runEmpty . ShowM.showM
 
 map2 :: (forall t. SetTheoretic_ t => t -> t -> t)
        -> T -> T -> T
@@ -91,7 +92,7 @@ instance SetTheoretic_ T where
   cap = map2 cap
   diff = map2 diff
 
-instance SetTheoretic Node.MemoMonad T where
+instance SetTheoretic T where
   sub t1 t2 =
     sub (arrows t1) (arrows t2) ABool.&&
     sub (ints t1) (ints t2) ABool.&&

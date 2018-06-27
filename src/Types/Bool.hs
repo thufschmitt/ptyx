@@ -61,7 +61,7 @@ instance SetTheoretic_ T where
   neg = negB
   diff x y = x /\ neg y
 
-instance SetTheoretic Applicative T where
+instance SetTheoretic T where
   isEmpty = pure . (==) Empty
   sub x y = pure $ x `subB` y
 

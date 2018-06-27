@@ -6,6 +6,7 @@
 module Typer.Infer where
 
 
+import qualified Control.Monad.Memo as Memo
 import qualified Data.Map as Map
 import           Data.Maybe (fromMaybe)
 import           Data.Monoid ((<>))
@@ -43,7 +44,7 @@ inferExpr env (WL.T loc descr) =
         checkSubtype loc funType $ (Node.noId $ Types.arrow full)
         let funTypeArrow = Arrow.get $ Types.arrows (Node.typ funType)
         checkSubtype loc argType $ Arrow.compDomain funTypeArrow
-        let codom = Node.run mempty $
+        let codom = Memo.runEmpty $
               Arrow.getApplication
                 funTypeArrow
                 argType

@@ -24,6 +24,7 @@ where
 import qualified Types.Node as Node
 import           Types.SetTheoretic
 
+import qualified Control.Monad.Memo as Memo
 import qualified Data.Bool.Applicative as ABool
 import           Data.Semigroup ((<>))
 import qualified Data.Set as Set
@@ -40,8 +41,8 @@ instance ShowM.ShowM m t => ShowM.ShowM m (Arrow t) where
     prettyT2 <- ShowM.showM t2
     pure $ "(" <> prettyT1 <> ") -> " <> prettyT2
 
-instance ShowM.ShowM Node.Memo t => Show (Arrow t) where
-  show = T.unpack . Node.runEmpty . ShowM.showM
+instance ShowM.ShowM Memo.T t => Show (Arrow t) where
+  show = T.unpack . Memo.runEmpty . ShowM.showM
 
 -- | Arrow type
 newtype T t = T (Bdd.T (Arrow t)) deriving (Eq, Ord, SetTheoretic_)
@@ -65,7 +66,7 @@ codomain (Arrow _ c) = c
 atom :: t -> t -> T t
 atom dom codom = T (Bdd.atom $ Arrow dom codom)
 
-isEmptyA :: (SetTheoretic c t, c m, Monad m) => T t -> m Bool
+isEmptyA :: SetTheoretic t => T t -> Memo.T Bool
 isEmptyA (T a)
   | Bdd.isTriviallyEmpty a = pure True
   | Bdd.isTriviallyFull a = pure False
@@ -91,20 +92,20 @@ isEmptyA (T a)
         capN (Set.map codomain p) `sub` t
 
 
-instance SetTheoretic Node.MemoMonad t => SetTheoretic Node.MemoMonad (T t) where
+instance SetTheoretic t => SetTheoretic (T t) where
   isEmpty = isEmptyA
 
 -- | @getApplication arr s@ returns the biggest type @t@ such
 -- that @s -> t <: arr@
 getApplication :: forall t c m.
-  (SetTheoretic c t, c m, Monad m) => Bdd.DNF (Arrow t) -> t -> m t
+  SetTheoretic t => Bdd.DNF (Arrow t) -> t -> Memo.T t
 getApplication arr s =
   cupN <$> mapM elemApp (Set.toList arr)
   where
-    elemApp :: (Set.Set (Arrow t), Set.Set (Arrow t)) -> m t
+    elemApp :: (Set.Set (Arrow t), Set.Set (Arrow t)) -> Memo.T t
     elemApp (pos, _) =
       foldStrictSubsets (pure empty) addElemApp pos Set.empty
-    addElemApp :: m t -> Set.Set (Arrow t) -> Set.Set (Arrow t) -> m t
+    addElemApp :: Memo.T t -> Set.Set (Arrow t) -> Set.Set (Arrow t) -> Memo.T t
     addElemApp accM subset compl = do
       acc <- accM
       isInDomains <- s `sub` cupN (Set.map domain subset)

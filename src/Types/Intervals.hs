@@ -129,7 +129,7 @@ instance SetTheoretic_ T where
 
   diff i1 i2 = cap i1 (neg i2)
 
-instance SetTheoretic Applicative T where
+instance SetTheoretic T where
   isEmpty (Intervals l) = pure $ null l
 
 instance Monad m => ShowM.ShowM m T where

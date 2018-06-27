@@ -11,6 +11,7 @@ module Types.Pair
   , atomic
   ) where
 
+import qualified Control.Monad.Memo as Memo
 import qualified Data.Bool.Applicative as ABool
 import           Data.Semigroup ((<>))
 import qualified Data.Set as Set
@@ -43,10 +44,10 @@ atomic :: t -> t -> T t
 atomic hd tl = T (Bdd.atom $ Atom hd tl)
 
 isEmptyL
-  :: forall c t m.
-     (SetTheoretic c t, c m, Applicative m)
+  :: forall c t.
+     SetTheoretic t
   => T t
-  -> m Bool
+  -> Memo.T Bool
 isEmptyL (T l)
   | Bdd.isTriviallyEmpty l = pure True
   | Bdd.isTriviallyFull l = pure False
@@ -54,7 +55,7 @@ isEmptyL (T l)
     let pairs = Bdd.toDNF l in
     ABool.all emptyIntersect pairs
   where
-    emptyIntersect :: (Set.Set (Atom t), Set.Set (Atom t)) -> m Bool
+    emptyIntersect :: (Set.Set (Atom t), Set.Set (Atom t)) -> Memo.T Bool
     emptyIntersect (posAtoms, negAtoms) =
       let
         capFirsts = capN . Set.map first
@@ -71,5 +72,5 @@ isEmptyL (T l)
           )
           negAtoms
 
-instance SetTheoretic Node.MemoMonad t => SetTheoretic Node.MemoMonad (T t) where
+instance SetTheoretic t => SetTheoretic (T t) where
   isEmpty = isEmptyL
