@@ -1,6 +1,7 @@
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 
 module Text.ShowM
@@ -8,6 +9,8 @@ module Text.ShowM
   , fromShow
   ) where
 
+import qualified Data.List as List
+import qualified Data.Set as Set
 import qualified Data.Text.Lazy as Text
 import qualified Data.Text.Lazy.Builder as Builder
 
@@ -25,3 +28,10 @@ instance Monad m => ShowM m String where
 
 fromShow :: (Monad m, Show a) => a -> m Text.Text
 fromShow = pure . Text.pack . show
+
+instance ShowM m a => ShowM m (Set.Set a) where
+  showM set = do
+    l <- traverse showM (Set.toList set)
+    case l of
+      [] -> pure "⊥"
+      _  -> pure . mconcat $ List.intersperse "|" l
